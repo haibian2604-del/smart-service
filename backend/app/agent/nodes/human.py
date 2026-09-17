@@ -60,7 +60,9 @@ async def human_review_node(state, *, session: AsyncSession, thread_id: str,
         r.status = RefundStatus.PENDING
         await session.flush()
 
-    value = await interrupt_fn({"task_id": task.id, "kind": "refund_review"})
+    import inspect
+    v = interrupt_fn({"task_id": task.id, "kind": "refund_review"})
+    value = await v if inspect.isawaitable(v) else v
     # 单测桩直接返回包装 dict；真实 interrupt 在图内首跑时抛 GraphInterrupt，
     # resume 后才返回 Command(resume=...) 的值
     if isinstance(value, dict) and "__interrupt__" in value:

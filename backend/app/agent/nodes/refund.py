@@ -45,6 +45,7 @@ async def refund_node(state: AgentState, *, session: AsyncSession, llm: LLMClien
         await submit_refund(session, _scope(state), refund_id=draft["id"],
                             decision="approved", note="自动通过：未触发转人工规则")
         return {"refund_draft": draft, "triggering_rule": None, "refund_state": "refunded",
+                "human_task_id": None,
                 "reply": f"您的退款 {draft['refund_no']}（¥{draft['amount']}）已自动受理，将原路退回。",
                 "widgets": [{"kind": "refund", "data": {**draft, "trigger": None}}]}
 

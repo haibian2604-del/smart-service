@@ -1,6 +1,19 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 
-app = FastAPI(title="Smart Service Agent")
+from app.api import chat
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # ponytail: API 测试走 MemorySaver（conftest 注入 app.state）；生产 P6 再切 AsyncPostgresSaver
+    app.state.checkpointer = None
+    yield
+
+
+app = FastAPI(title="Smart Service Agent", lifespan=lifespan)
+app.include_router(chat.router)
 
 
 @app.get("/health")

@@ -28,6 +28,44 @@ async def session(engine):
 
 
 @pytest.fixture
+async def client(session, engine):
+    """ASGI 测试客户端：会话/LLM/checkpointer 全部替换为测试实现。"""
+    from collections.abc import AsyncIterator
+    from langgraph.checkpoint.memory import MemorySaver
+
+    from app.core.db import get_session
+    from app.main import app
+
+    async def _override_session() -> AsyncIterator[AsyncSession]:
+        yield session
+
+    app.dependency_overrides[get_session] = _override_session
+    app.state.checkpointer = MemorySaver()
+    yield app
+    app.dependency_overrides.pop(get_session, None)
+
+
+@pytest.fixture
+async def override_llm():
+    """把进程级 LLM 换成 FakeLLM。
+    裸用：安装 SmartFakeLLM（关键词意图分类 + 模板回复）；
+    调用：override_llm(['resp1', ...]) 安装按序回放的 FakeLLM。"""
+    from app.core.llm import set_llm
+    from tests.fakes import SmartFakeLLM
+
+    set_llm(SmartFakeLLM([]))  # 默认装智能桩
+
+    def _install(responses):
+        from tests.fakes import FakeLLM
+        fake = FakeLLM(responses)
+        set_llm(fake)
+        return fake
+
+    yield _install
+    set_llm(None)
+
+
+@pytest.fixture
 async def seeded(session):
     """最小可控数据集：两租户、两商家账号、一个演示用户、少量订单/商品。"""
     from types import SimpleNamespace

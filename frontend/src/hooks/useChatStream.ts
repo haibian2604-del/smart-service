@@ -2,8 +2,6 @@ import { useCallback, useRef, useState } from 'react'
 import type { ChatEvent, Message, Widget } from '../types'
 import { parseSSEChunk } from '../lib/sse'
 
-let seq = 0
-const nextId = () => `m${++seq}`
 
 export function useChatStream(conversationId: number | null) {
   const [messages, setMessages] = useState<Message[]>([])
@@ -15,7 +13,7 @@ export function useChatStream(conversationId: number | null) {
 
   const send = useCallback(async (text: string) => {
     const actor = JSON.parse(localStorage.getItem('smart-service.actor') ?? 'null')
-    setMessages(m => [...m, { id: nextId(), role: 'user', content: text, widgets: [], toolCalls: [] }])
+    setMessages(m => [...m, { id: crypto.randomUUID(), role: 'user', content: text, widgets: [], toolCalls: [] }])
     setStreaming(true)
     setStreamingText('')
     setPendingTaskId(null)
@@ -42,7 +40,7 @@ export function useChatStream(conversationId: number | null) {
         buffer = rest
         for (const e of events as ChatEvent[]) {
           if (e.type === 'token') { reply += e.text; setStreamingText(reply) }
-          else if (e.type === 'widget') widgets.push({ kind: e.kind, data: e.data })
+          else if (e.type === 'widget') widgets.push({ kind: e.kind, data: e.data } as Widget)  // 网络边界唯一 cast
           else if (e.type === 'meta') convRef.current = e.conversation_id
           else if (e.type === 'awaiting_human') setPendingTaskId(e.task_id)
           else if (e.type === 'error') reply += `\n[出错] ${e.message}`
@@ -51,7 +49,7 @@ export function useChatStream(conversationId: number | null) {
     } catch (err) {
       reply = `连接失败：${String(err)}`
     } finally {
-      setMessages(m => [...m, { id: nextId(), role: 'assistant', content: reply, widgets, toolCalls: [] }])
+      setMessages(m => [...m, { id: crypto.randomUUID(), role: 'assistant', content: reply, widgets, toolCalls: [] }])
       setStreaming(false)
       setStreamingText('')
     }

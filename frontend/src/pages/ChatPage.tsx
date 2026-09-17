@@ -1,16 +1,14 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import type { Actor } from '../types'
 import { MessageList } from '../components/MessageList'
 import { useChatStream } from '../hooks/useChatStream'
 import { usePolling } from '../hooks/usePolling'
 import { request } from '../lib/api'
-import { clearActor } from '../lib/actor'
+import { SwitchIdentityButton } from '../components/SwitchIdentityButton'
 
 const QUICK_PROMPTS = ['你们有蓝牙耳机吗', '我的订单 #A1002 到哪了', '订单 #A1002 我要退款']
 
 export function ChatPage({ actor }: { actor: Actor }) {
-  const nav = useNavigate()
   const [input, setInput] = useState('')
   const { messages, send, streaming, streamingText, pendingTaskId, conversationId } = useChatStream(null)
 
@@ -22,10 +20,7 @@ export function ChatPage({ actor }: { actor: Actor }) {
           <span className="font-medium text-slate-900">{actor.name}</span>
           <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">消费者</span>
         </div>
-        <button onClick={() => { clearActor(); nav('/') }}
-                className="rounded-lg px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-100">
-          切换身份
-        </button>
+        <SwitchIdentityButton />
       </header>
 
       {pendingTaskId !== null && (

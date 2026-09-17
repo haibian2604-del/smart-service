@@ -1,19 +1,19 @@
-import type { Message, Widget } from '../types'
+import type { Message } from '../types'
 import { ToolCallTrace } from './ToolCallTrace'
 import { OrderCard } from './OrderCard'
 import { RefundCard } from './RefundCard'
 import { ProductList } from './ProductList'
 
-function WidgetView({ w }: { w: Widget }) {
-  if (w.kind === 'order') return <OrderCard data={w.data as never} />
-  if (w.kind === 'refund') return <RefundCard data={w.data as never} />
-  return <ProductList data={w.data as never} />
+function WidgetView({ w }: { w: Message['widgets'][number] }) {
+  if (w.kind === 'order') return <OrderCard data={w.data} />
+  if (w.kind === 'refund') return <RefundCard data={w.data} />
+  return <ProductList data={w.data} />
 }
 
 interface Props {
   role: Message['role']
   content: string
-  widgets: Widget[]
+  widgets: Message['widgets']
   toolCalls: Message['toolCalls']
   streaming?: boolean
 }

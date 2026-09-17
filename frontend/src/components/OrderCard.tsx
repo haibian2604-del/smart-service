@@ -1,14 +1,5 @@
 import { StatusBadge } from './StatusBadge'
-
-interface OrderItem { name: string; quantity: number; unit_price: string }
-interface OrderData {
-  order_no: string
-  status: string
-  total_amount: string
-  created_at: string
-  shipped_at?: string | null
-  items: OrderItem[]
-}
+import type { OrderData } from '../types'
 
 export function OrderCard({ data }: { data: OrderData }) {
   return (

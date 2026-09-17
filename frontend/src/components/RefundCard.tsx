@@ -1,17 +1,5 @@
 import { StatusBadge } from './StatusBadge'
-
-interface RefundData {
-  refund_no?: string
-  amount: string
-  status?: string
-  trigger?: string | null
-}
-
-const TRIGGER_LABEL: Record<string, string> = {
-  amount_over_threshold: '金额超限',
-  already_shipped: '已发货/签收',
-  user_requested: '用户要求人工',
-}
+import { TRIGGER_LABEL, type RefundData } from '../types'
 
 export function RefundCard({ data }: { data: RefundData }) {
   const stages = ['draft', 'pending', data.status === 'rejected' ? 'rejected' : 'approved', 'refunded']

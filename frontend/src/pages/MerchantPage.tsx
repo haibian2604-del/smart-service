@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
 import type { Actor } from '../types'
+import { TRIGGER_LABEL } from '../types'
 import { ApiError, request } from '../lib/api'
-import { clearActor } from '../lib/actor'
+import { SwitchIdentityButton } from '../components/SwitchIdentityButton'
 
 interface Task {
   id: number
@@ -13,25 +13,18 @@ interface Task {
   created_at: string
 }
 
-const TRIGGER_LABEL: Record<string, string> = {
-  amount_over_threshold: '金额超限',
-  already_shipped: '已发货/签收',
-  user_requested: '用户要求人工',
-}
-
 export function MerchantPage({ actor }: { actor: Actor }) {
-  const nav = useNavigate()
   const [tasks, setTasks] = useState<Task[]>([])
   const [toast, setToast] = useState<string | null>(null)
   const [rejecting, setRejecting] = useState<number | null>(null)
   const [note, setNote] = useState('')
   const [busy, setBusy] = useState(false)
 
-  const load = useCallback(async () => {
+  const load = async () => {
     setTasks(await request<Task[]>('/api/merchant/tasks?status=pending'))
-  }, [])
+  }
 
-  useEffect(() => { void load() }, [load])
+  useEffect(() => { void load() }, [])
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 2500) }
 
@@ -60,10 +53,7 @@ export function MerchantPage({ actor }: { actor: Actor }) {
           <span className="font-medium text-slate-900">{actor.name}</span>
           <span className="rounded-full bg-sky-100 px-2 py-0.5 text-xs text-sky-800">商家 · 租户 #{actor.merchantId}</span>
         </div>
-        <button onClick={() => { clearActor(); nav('/') }}
-                className="rounded-lg px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-100">
-          切换身份
-        </button>
+        <SwitchIdentityButton />
       </header>
 
       <h1 className="mb-3 text-lg font-semibold text-slate-900">待审批工单</h1>

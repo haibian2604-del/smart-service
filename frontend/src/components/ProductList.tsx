@@ -1,10 +1,4 @@
-interface Product {
-  id: number
-  name: string
-  category: string | null
-  price: string
-  stock: number
-}
+import type { Product } from '../types'
 
 export function ProductList({ data }: { data: Product[] }) {
   return (

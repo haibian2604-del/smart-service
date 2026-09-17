@@ -14,13 +14,14 @@ async def test_product_node_returns_widget_and_reply(session, seeded):
     assert out["reply"]
 
 
-async def test_order_node_missing_order_no_asks_back(session, seeded):
-    llm = FakeLLM([])  # 不应被调用
-    state = new_state(scope=Scope.for_user(seeded.user_id), text="订单到哪了")
+async def test_order_node_missing_order_no_lists_my_orders(session, seeded):
+    llm = FakeLLM(["您购买过蓝牙耳机和冲锋衣"])
+    state = new_state(scope=Scope.for_user(seeded.user_id), text="我购买了哪些商品")
     state["intent"] = "order"
     out = await order_node(state, session=session, llm=llm)
-    assert "订单号" in out["reply"] and out["widgets"] == []
-    assert llm.calls == 0
+    assert out["reply"] == "您购买过蓝牙耳机和冲锋衣"
+    assert out["widgets"] and out["widgets"][0]["kind"] == "order"
+    assert llm.calls == 1
 
 
 async def test_order_node_emits_order_widget(session, seeded):

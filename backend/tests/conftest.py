@@ -18,7 +18,7 @@ async def engine():
 async def session(engine):
     conn = await engine.connect()
     trans = await conn.begin()
-    sess = AsyncSession(bind=conn, expire_on_commit=False)
+    sess = AsyncSession(bind=conn, expire_on_commit=False, join_transaction_mode="create_savepoint")
     try:
         yield sess
     finally:

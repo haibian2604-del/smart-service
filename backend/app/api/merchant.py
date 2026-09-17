@@ -60,4 +60,5 @@ async def resolve_task(task_id: int, body: ResolveRequest, request: Request,
         Command(resume={"decision": body.decision, "note": body.note}),
         config={"configurable": {"thread_id": task.thread_id}},
     )
+    await session.commit()
     return {"refund_state": result.get("refund_state"), "reply": result.get("reply")}

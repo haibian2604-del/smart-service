@@ -72,9 +72,12 @@ async def chat_stream(body: ChatRequest, request: Request,
                     task_id = final["__interrupt__"][0].value.get("task_id")
                     yield _sse("awaiting_human", task_id=task_id)
                 yield _sse("done", conversation_id=conversation_id)
+                await session.commit()
             else:
+                await session.rollback()
                 yield _sse("error", message="empty graph result")
         except Exception as e:  # demo：任何异常转 error 事件，不让连接挂死
+            await session.rollback()
             yield _sse("error", message=str(e))
 
     return EventSourceResponse(gen(), headers={"X-Conversation-Id": str(body.conversation_id or 0)})

@@ -8,7 +8,6 @@ from decimal import Decimal
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from app.core.config import get_settings
 from app.core.db import get_engine
 from app.models import (
     Merchant, Order, OrderItem, OrderStatus, Product, User, UserRole,
@@ -108,7 +107,7 @@ async def main() -> None:
     async with maker() as session:
         await seed(session)
         await session.commit()
-        n = (await session.execute(select(Order).where(Order.user_id == get_settings().demo_user_id)))
+        n = (await session.execute(select(Order)))
         print("seed done:", len(n.all()), "orders")
 
 

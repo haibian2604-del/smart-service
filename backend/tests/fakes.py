@@ -14,10 +14,6 @@ class FakeLLM:
             return ""
         return self._responses.pop(0)
 
-    async def stream(self, system: str, user: str):
-        text = await self.complete(system, user)
-        for ch in text:
-            yield ch
 
 
 class SmartFakeLLM(FakeLLM):

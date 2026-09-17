@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.agent.nodes import chitchat, classify, human, order, product, refund, respond
 from app.agent.state import AgentState
-from app.core.llm import LLMClient
+
 
 
 def route_after_classify(state: AgentState) -> str:
@@ -21,7 +21,7 @@ def route_after_refund(state: AgentState) -> str:
     return "human_review"
 
 
-def build_graph(*, session: AsyncSession, llm: LLMClient,
+def build_graph(*, session: AsyncSession, llm,
                 checkpointer: BaseCheckpointSaver) -> CompiledStateGraph:
     g = StateGraph(AgentState)
 
@@ -59,6 +59,6 @@ async def _human_review(state: AgentState, config: RunnableConfig, *, session: A
     return await human.human_review_node(state, session=session, thread_id=thread_id)
 
 
-async def _unknown_node(state: AgentState, *, llm: LLMClient) -> dict:
+async def _unknown_node(state: AgentState, *, llm) -> dict:
     reply = await llm.complete("你是电商客服，简短回复。", "用户说了无法理解的话，请礼貌引导：\n" + state["text"])
     return {"reply": reply, "widgets": []}

@@ -4,10 +4,10 @@ from app.agent.nodes.extract import order_no_in
 from app.agent.scope import Scope
 from app.agent.state import AgentState
 from app.agent.tools.orders import get_order_detail
-from app.core.llm import LLMClient
 
 
-async def order_node(state: AgentState, *, session: AsyncSession, llm: LLMClient) -> dict:
+
+async def order_node(state: AgentState, *, session: AsyncSession, llm) -> dict:
     scope = Scope(role=state["actor_role"], user_id=state["actor_id"], merchant_id=state.get("merchant_id"))
     order_no = order_no_in(state)
     if not order_no:

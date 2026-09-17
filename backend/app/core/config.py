@@ -13,8 +13,6 @@ class Settings(BaseSettings):
     llm_model: str = "gemma-4-e2b-it-4bit"
     llm_api_key: str = "none"
     refund_amount_threshold: Decimal = Decimal("200")
-    demo_user_id: int = 1
-    demo_merchant_ids: tuple[int, ...] = (1, 2)
 
 
 @lru_cache

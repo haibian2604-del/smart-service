@@ -1,5 +1,5 @@
 from app.models.base import Base
-from app.models.conversation import Conversation, Message, MessageRole
+from app.models.conversation import Conversation, Message
 from app.models.human_task import HumanTask, TaskStatus
 from app.models.merchant import Merchant
 from app.models.order import Order, OrderItem, OrderStatus
@@ -11,6 +11,6 @@ __all__ = [
     "Base", "Merchant", "User", "UserRole",
     "Product", "Order", "OrderItem", "OrderStatus",
     "Refund", "RefundStatus",
-    "Conversation", "Message", "MessageRole",
+    "Conversation", "Message",
     "HumanTask", "TaskStatus",
 ]

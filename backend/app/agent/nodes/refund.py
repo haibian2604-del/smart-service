@@ -6,14 +6,14 @@ from app.agent.state import AgentState
 from app.agent.tools.refunds import check_refund_policy, create_refund_draft, submit_refund
 from app.agent.tools.orders import get_order_detail
 from app.core.config import get_settings
-from app.core.llm import LLMClient
+
 
 
 def _scope(state: AgentState) -> Scope:
     return Scope(role=state["actor_role"], user_id=state["actor_id"], merchant_id=state.get("merchant_id"))
 
 
-async def refund_node(state: AgentState, *, session: AsyncSession, llm: LLMClient) -> dict:
+async def refund_node(state: AgentState, *, session: AsyncSession, llm) -> dict:
     order_no = order_no_in(state)
     if not order_no:
         return {"reply": "请提供一下要退款的订单号（如 #A1001），我帮您办理。", "widgets": [],

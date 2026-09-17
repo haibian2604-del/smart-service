@@ -7,7 +7,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.agent.policy import detect_human_trigger
 from app.agent.scope import Scope
 from app.agent.tools.orders import _normalize_order_no, _scope_filter
-from app.agent.tools.registry import register
 from app.models import Order, Refund, RefundStatus
 
 # 这些状态表示已有退款在途，不可重复申请
@@ -19,7 +18,6 @@ async def _next_refund_no(session: AsyncSession) -> str:
     return f"#R{2000 + max_id + 1}"
 
 
-@register("check_refund_policy")
 async def check_refund_policy(session: AsyncSession, scope: Scope, *,
                               order_no: str, refund_amount: Decimal, user_text: str) -> dict:
     o = (await session.execute(
@@ -51,7 +49,6 @@ async def check_refund_policy(session: AsyncSession, scope: Scope, *,
     }
 
 
-@register("create_refund_draft")
 async def create_refund_draft(session: AsyncSession, scope: Scope, *, policy: dict) -> dict:
     r = Refund(
         refund_no=await _next_refund_no(session),
@@ -67,7 +64,6 @@ async def create_refund_draft(session: AsyncSession, scope: Scope, *, policy: di
     return {"id": r.id, "refund_no": r.refund_no, "amount": str(r.amount), "status": r.status.value}
 
 
-@register("submit_refund")
 async def submit_refund(session: AsyncSession, scope: Scope, *,
                         refund_id: int, decision: str, note: str | None) -> dict:
     r = await session.get(Refund, refund_id)

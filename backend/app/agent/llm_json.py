@@ -1,8 +1,6 @@
 import json_repair
 from pydantic import BaseModel
 
-from app.core.llm import LLMClient
-
 
 def strip_code_fence(text: str) -> str:
     t = text.strip()
@@ -15,7 +13,7 @@ def strip_code_fence(text: str) -> str:
     return t.strip()
 
 
-async def ask_json(llm: LLMClient, *, system: str, user: str,
+async def ask_json(llm, *, system: str, user: str,
                    schema: type[BaseModel], retries: int = 1) -> BaseModel:
     """complete → 去 fence → json_repair → schema 校验；失败带纠错提示重试。"""
     attempts = retries + 1

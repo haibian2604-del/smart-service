@@ -4,7 +4,6 @@ from sqlalchemy import select
 
 from app.agent.scope import Scope
 from app.agent.tools.refunds import check_refund_policy, create_refund_draft, submit_refund
-from app.agent.tools.registry import TOOLS
 from app.models import Refund, RefundStatus
 
 
@@ -84,9 +83,3 @@ async def test_submit_rejected_records_note(session, seeded):
     assert row.status is RefundStatus.REJECTED and row.review_note == "超出退款期限"
 
 
-def test_registry_exposes_all_tools():
-    assert set(TOOLS) == {
-        "search_products", "get_product_detail",
-        "list_my_orders", "get_order_detail",
-        "check_refund_policy", "create_refund_draft", "submit_refund",
-    }

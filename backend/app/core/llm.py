@@ -1,14 +1,7 @@
-from collections.abc import AsyncIterator
-from typing import Protocol
-
 import httpx
 
 from app.core.config import get_settings
 
-
-class LLMClient(Protocol):
-    async def complete(self, system: str, user: str) -> str: ...
-    def stream(self, system: str, user: str) -> AsyncIterator[str]: ...
 
 
 class OMLXClient:
@@ -29,24 +22,17 @@ class OMLXClient:
             resp.raise_for_status()
             return resp.json()["choices"][0]["message"]["content"]
 
-    async def stream(self, system: str, user: str) -> AsyncIterator[str]:
-        # ponytail: 演示用非流式凑成逐字，真流式等 P5 接 SSE 时再上
-        text = await self.complete(system, user)
-        for ch in text:
-            yield ch
+_llm = None
 
 
-_llm: LLMClient | None = None
-
-
-def get_llm() -> LLMClient:
+def get_llm():
     global _llm
     if _llm is None:
         _llm = OMLXClient()
     return _llm
 
 
-def set_llm(llm: LLMClient) -> None:
+def set_llm(llm) -> None:
     """测试注入用。"""
     global _llm
     _llm = llm

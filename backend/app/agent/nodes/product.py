@@ -4,12 +4,12 @@ from app.agent.nodes.extract import extract_keyword
 from app.agent.scope import Scope
 from app.agent.state import AgentState
 from app.agent.tools.products import search_products
-from app.core.llm import LLMClient
+
 
 _REPLY_PROMPT = "把以下商品列表组织成一句简短自然的客服回复，只输出这句话本身：\n{data}"
 
 
-async def product_node(state: AgentState, *, session: AsyncSession, llm: LLMClient) -> dict:
+async def product_node(state: AgentState, *, session: AsyncSession, llm) -> dict:
     scope = Scope(role=state["actor_role"], user_id=state["actor_id"], merchant_id=state.get("merchant_id"))
     keyword = extract_keyword(state["text"]) or None
     products = await search_products(session, scope, keyword=keyword)

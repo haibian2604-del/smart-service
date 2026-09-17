@@ -1,4 +1,3 @@
-import enum
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
@@ -13,11 +12,6 @@ class Conversation(PKMixin, TimestampMixin, Base):
     title: Mapped[str | None] = mapped_column()
 
 
-class MessageRole(str, enum.Enum):
-    USER = "user"
-    ASSISTANT = "assistant"
-    TOOL = "tool"
-    SYSTEM = "system"
 
 
 class Message(PKMixin, TimestampMixin, Base):

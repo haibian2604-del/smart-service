@@ -3,7 +3,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.agent.scope import Scope
-from app.agent.tools.registry import register
 from app.models import Order, OrderItem
 
 
@@ -47,7 +46,6 @@ async def _get_scoped_order(session: AsyncSession, scope: Scope, *, order_no: st
     return (await session.execute(stmt)).scalar_one_or_none()
 
 
-@register("list_my_orders")
 async def list_my_orders(session: AsyncSession, scope: Scope) -> list[dict]:
     stmt = (
         select(Order)
@@ -59,7 +57,6 @@ async def list_my_orders(session: AsyncSession, scope: Scope) -> list[dict]:
     return [_order_dict(o, with_items=True) for o in rows]
 
 
-@register("get_order_detail")
 async def get_order_detail(session: AsyncSession, scope: Scope, *, order_no: str) -> dict | None:
     o = await _get_scoped_order(session, scope, order_no=order_no)
     return _order_dict(o, with_items=True) if o else None

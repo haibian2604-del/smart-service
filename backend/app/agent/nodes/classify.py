@@ -4,7 +4,7 @@ from app.agent.llm_json import ask_json
 from app.agent.prompts.classify import SYSTEM
 from app.agent.slots import extract_order_no, extract_refund_amount
 from app.agent.state import AgentState
-from app.core.llm import LLMClient
+
 
 INTENTS = ("product", "order", "refund", "chitchat", "unknown")
 
@@ -30,7 +30,7 @@ def _keyword_intent(text: str) -> str:
     return "unknown"
 
 
-async def classify_node(state: AgentState, *, llm: LLMClient) -> dict:
+async def classify_node(state: AgentState, *, llm) -> dict:
     text = state["text"]
     # 1. 正则抽槽位，不依赖模型
     updates: dict = {

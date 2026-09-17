@@ -7,7 +7,7 @@ export function MessageList({ messages, streamingText }: {
   streamingText: string
 }) {
   const endRef = useRef<HTMLDivElement>(null)
-  useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages.length, streamingText])
+  useEffect(() => { endRef.current?.scrollIntoView?.({ behavior: 'smooth' }) }, [messages.length, streamingText])
 
   return (
     <div className="flex flex-1 flex-col gap-3 overflow-y-auto p-4">

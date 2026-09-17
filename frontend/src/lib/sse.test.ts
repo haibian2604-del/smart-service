@@ -26,4 +26,16 @@ describe('parseSSEChunk', () => {
   it('ignores ping comments', () => {
     expect(parseSSEChunk(': ping\n\n').events).toEqual([])
   })
+
+  it('parses CRLF payload from sse-starlette', () => {
+    const { events } = parseSSEChunk('event: message\r\ndata: {"type":"token","text":"hi"}\r\n\r\n', '')
+    expect(events).toEqual([{ type: 'token', text: 'hi' }])
+  })
+
+  it('handles CRLF split across chunk boundary', () => {
+    const first = parseSSEChunk('data: {"type":"token","text":"a"}\r\n', '')
+    expect(first.events).toEqual([])
+    const second = parseSSEChunk('\r\ndata: {"type":"done"}\r\n\r\n', first.buffer)
+    expect(second.events).toEqual([{ type: 'token', text: 'a' }, { type: 'done' }])
+  })
 })

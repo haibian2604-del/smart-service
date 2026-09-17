@@ -2,12 +2,23 @@ import { act, renderHook, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 import { useChatStream } from './useChatStream'
 
-function sseResponse(events: object[]) {
+function mockXHR(events: object[], status = 200) {
   const body = events.map(e => `data: ${JSON.stringify(e)}\n\n`).join('')
-  const stream = new ReadableStream({
-    start(c) { c.enqueue(new TextEncoder().encode(body)); c.close() },
-  })
-  return new Response(stream, { status: 200 })
+  class FakeXHR {
+    responseText = ''
+    status = status
+    open() {} setRequestHeader() {}
+    onprogress: (() => void) | null = null
+    onload: (() => void) | null = null
+    onerror: (() => void) | null = null
+    send() {
+      // 模拟分两次到达
+      const half = Math.floor(body.length / 2)
+      setTimeout(() => { this.responseText = body.slice(0, half); this.onprogress?.() }, 0)
+      setTimeout(() => { this.responseText = body; this.onprogress?.(); this.onload?.() }, 10)
+    }
+  }
+  return FakeXHR
 }
 
 beforeEach(() => {
@@ -17,7 +28,7 @@ afterEach(() => vi.restoreAllMocks())
 
 describe('useChatStream', () => {
   it('appends user and assistant messages from SSE stream', async () => {
-    vi.spyOn(global, 'fetch').mockResolvedValue(sseResponse([
+    vi.stubGlobal('XMLHttpRequest', mockXHR([
       { type: 'meta', conversation_id: 9 },
       { type: 'token', text: '为您找到' },
       { type: 'token', text: '以下商品' },
@@ -34,10 +45,10 @@ describe('useChatStream', () => {
   })
 
   it('shows connection error as assistant message', async () => {
-    vi.spyOn(global, 'fetch').mockRejectedValue(new Error('proxy down'))
+    vi.stubGlobal('XMLHttpRequest', mockXHR([], 500))
     const { result } = renderHook(() => useChatStream(null))
     await act(() => result.current.send('hi'))
     await waitFor(() => expect(result.current.streaming).toBe(false))
-    expect(result.current.messages[1].content).toContain('连接失败')
+    expect(result.current.messages[1].content).toContain('HTTP 500')
   })
 })

@@ -4,7 +4,8 @@ import type { ChatEvent } from '../types'
  * 解析一个网络分片，保留未闭合的尾部块作为 buffer（SSE 分片边界最常见的 bug 点）。
  */
 export function parseSSEChunk(chunk: string, buffer = ''): { events: ChatEvent[]; buffer: string } {
-  const data = buffer + chunk
+  // sse-starlette 发 CRLF（\r\n），先归一化再按空行分块——跨分片的 \r|\n 边界也因拼接后归一化而安全
+  const data = (buffer + chunk).replace(/\r\n/g, '\n')
   const blocks = data.split('\n\n')
   const remainder = blocks.pop() ?? ''
   const events: ChatEvent[] = []

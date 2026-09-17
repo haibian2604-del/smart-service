@@ -19,32 +19,33 @@ export function useChatStream(conversationId: number | null) {
 
     const widgets: Widget[] = []
     let reply = ''
+    let buffer = ''
+    const handle = (chunk: string) => {
+      const { events, buffer: rest } = parseSSEChunk(chunk, buffer)
+      buffer = rest
+      for (const e of events as ChatEvent[]) {
+        if (e.type === 'token') { reply += e.text; setStreamingText(reply) }
+        else if (e.type === 'widget') widgets.push({ kind: e.kind, data: e.data } as Widget)  // 网络边界唯一 cast
+        else if (e.type === 'meta') convRef.current = e.conversation_id
+        else if (e.type === 'awaiting_human') setPendingTaskId(e.task_id)
+        else if (e.type === 'error') reply += `\n[出错] ${e.message}`
+      }
+    }
 
     try {
-      const resp = await fetch('/api/chat/stream', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Actor-Id': String(actor?.id ?? '') },
-        body: JSON.stringify({ conversation_id: convRef.current, message: text }),
+      // ponytail: 真实 Chromium 下页面内 POST 流式 fetch 读不到数据（裸 fetch / 伪造响应均正常，原因未明），
+      // 改用 XHR onprogress 渐进读取，对 SSE/代理兼容性最好；若日后查明可换回 fetch
+      await new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest()
+        xhr.open('POST', '/api/chat/stream')
+        xhr.setRequestHeader('Content-Type', 'application/json')
+        xhr.setRequestHeader('X-Actor-Id', String(actor?.id ?? ''))
+        let seen = 0
+        xhr.onprogress = () => { handle(xhr.responseText.slice(seen)); seen = xhr.responseText.length }
+        xhr.onload = () => { handle(xhr.responseText.slice(seen)); if (xhr.status !== 200) reject(new Error(`HTTP ${xhr.status}`)); else resolve() }
+        xhr.onerror = () => reject(new Error('网络错误'))
+        xhr.send(JSON.stringify({ conversation_id: convRef.current, message: text }))
       })
-      if (!resp.ok || !resp.body) throw new Error(`stream failed: ${resp.status}`)
-
-      const reader = resp.body.getReader()
-      const decoder = new TextDecoder()
-      let buffer = ''
-
-      for (;;) {
-        const { done, value } = await reader.read()
-        if (done) break
-        const { events, buffer: rest } = parseSSEChunk(decoder.decode(value, { stream: true }), buffer)
-        buffer = rest
-        for (const e of events as ChatEvent[]) {
-          if (e.type === 'token') { reply += e.text; setStreamingText(reply) }
-          else if (e.type === 'widget') widgets.push({ kind: e.kind, data: e.data } as Widget)  // 网络边界唯一 cast
-          else if (e.type === 'meta') convRef.current = e.conversation_id
-          else if (e.type === 'awaiting_human') setPendingTaskId(e.task_id)
-          else if (e.type === 'error') reply += `\n[出错] ${e.message}`
-        }
-      }
     } catch (err) {
       reply = `连接失败：${String(err)}`
     } finally {
@@ -54,4 +55,5 @@ export function useChatStream(conversationId: number | null) {
     }
   }, [])
 
-  return { messages, send, streaming, streamingText, pendingTaskId, conversationId: convRef }}
+  return { messages, send, streaming, streamingText, pendingTaskId, conversationId: convRef }
+}

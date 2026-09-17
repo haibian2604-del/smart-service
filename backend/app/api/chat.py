@@ -44,6 +44,9 @@ async def chat_stream(body: ChatRequest, request: Request,
             session.add(Message(conversation_id=conversation_id, role="user", content=body.message))
             await session.flush()
 
+            # 先发 meta：响应头+首包立即送达，LLM 期间前端可见“正在输入”
+            yield _sse("meta", conversation_id=conversation_id)
+
             checkpointer = getattr(request.app.state, "checkpointer", None) or MemorySaver()
             graph = build_graph(session=session, llm=get_llm(), checkpointer=checkpointer)
             scope = actor.to_scope()
@@ -61,7 +64,6 @@ async def chat_stream(body: ChatRequest, request: Request,
                 snap = await graph.aget_state(config)
                 final = snap.values
 
-            yield _sse("meta", conversation_id=conversation_id)
             if final:
                 for w in final.get("widgets") or []:
                     yield _sse("widget", kind=w["kind"], data=w["data"])

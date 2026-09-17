@@ -48,6 +48,7 @@ async def _get_scoped_order(session: AsyncSession, scope: Scope, *, order_no: st
 
 
 @register("list_my_orders")
+@register("list_my_orders")
 async def list_my_orders(session: AsyncSession, scope: Scope) -> list[dict]:
     stmt = (
         select(Order)
@@ -59,6 +60,7 @@ async def list_my_orders(session: AsyncSession, scope: Scope) -> list[dict]:
     return [_order_dict(o, with_items=True) for o in rows]
 
 
+@register("get_order_detail")
 @register("get_order_detail")
 async def get_order_detail(session: AsyncSession, scope: Scope, *, order_no: str) -> dict | None:
     o = await _get_scoped_order(session, scope, order_no=order_no)

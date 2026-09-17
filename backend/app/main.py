@@ -8,9 +8,15 @@ from app.api import chat, merchant
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # ponytail: API 测试走 MemorySaver（conftest 注入 app.state）；生产 P6 再切 AsyncPostgresSaver
-    app.state.checkpointer = None
-    yield
+    from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
+
+    from app.core.config import get_settings
+
+    dsn = get_settings().database_url.replace("+asyncpg", "")
+    async with AsyncPostgresSaver.from_conn_string(dsn) as saver:
+        await saver.setup()  # 幂等建 checkpoint 表
+        app.state.checkpointer = saver
+        yield
 
 
 app = FastAPI(title="Smart Service Agent", lifespan=lifespan)

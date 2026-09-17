@@ -349,3 +349,19 @@ smart_service/
 | P4 | refund 分支 + `human_review` interrupt + 商家端审批 + `Command(resume)` |
 | P5 | 前端 `/chat` 流式与卡片 → `/merchant` 审批台 |
 | P6 | 串通 5 幕演示脚本 |
+
+---
+
+## 13. 已实现范围与偏差（实施后回填）
+
+状态：P0–P6 全部完成。后端 99 tests / 前端 29 tests 全绿。
+
+| # | 设计 → 实现 | 偏差说明 |
+|---|---|---|
+| 1 | PG 16 + docker compose → 本机 pgvector 容器 | 复用已有 `pgvector/pgvector:0.8.6-pg18` 容器，跳过 compose |
+| 2 | oMLX `:8080` → 实际 `:8000` | `.env` 已对齐；注意与后端默认端口冲突，见 RUNBOOK |
+| 3 | LLM 走 langchain-openai → httpx 直连 | OpenAI 兼容接口足够；langchain-core 仅用于消息类型 |
+| 4 | 工具注册表 JSON dispatch → 直接 import | 节点均静态调用工具，注册表属投机抽象，已删 |
+| 5 | SSE LLM 流式 → 本地分片 | 节点回复为整句，`token` 事件由 `_chunk()` 切分；真流式待接 |
+| 6 | 金额抽取正则收紧 | 计划版会误抽裸数字（如订单号），需货币标记 `￥/¥/元/块` |
+| 7 | 幕 3-5 端到端测试 | 合并为一个链式测试（同一场景顺序状态） |

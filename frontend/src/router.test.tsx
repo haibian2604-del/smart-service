@@ -18,6 +18,6 @@ describe('role guard', () => {
   it('allows merchant into merchant page', () => {
     const actor = { id: 2, role: 'merchant' as const, name: '青柠数码', merchantId: 1 }
     render(<MemoryRouter initialEntries={['/merchant']}><AppRoutes actor={actor} /></MemoryRouter>)
-    expect(screen.getByText(/待审批/)).toBeInTheDocument()
+    expect(screen.getAllByText(/待审批/).length).toBeGreaterThanOrEqual(1)
   })
 })

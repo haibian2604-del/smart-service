@@ -13,6 +13,7 @@ class AgentState(TypedDict, total=False):
     actor_role: Literal["user", "merchant"]
     actor_id: int
     merchant_id: int | None
+    conversation_id: int | None      # 持久化消息用
     text: str                        # 本轮用户输入
     intent: str
     order_no: str | None

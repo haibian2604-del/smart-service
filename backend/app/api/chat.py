@@ -80,6 +80,22 @@ async def chat_stream(body: ChatRequest, request: Request,
     return EventSourceResponse(gen(), headers={"X-Conversation-Id": str(body.conversation_id or 0)})
 
 
+@router.get("/api/conversations/{conversation_id}/status")
+async def get_conversation_status(conversation_id: int,
+                                  actor: Actor = Depends(get_current_actor),
+                                  session: AsyncSession = Depends(get_session)):
+    from fastapi import HTTPException
+    from sqlalchemy import select
+    from app.models import Conversation, HumanTask, TaskStatus
+
+    conv = await session.get(Conversation, conversation_id)
+    if conv is None or conv.user_id != actor.id:
+        raise HTTPException(status_code=404)
+    task = (await session.execute(
+        select(HumanTask).where(HumanTask.thread_id == str(conversation_id),
+                                HumanTask.status == TaskStatus.PENDING)
+        .order_by(HumanTask.id.desc()).limit(1))).scalar_one_or_none()
+    return {"pending_human": task is not None, "task_id": task.id if task else None}
 @router.get("/api/conversations/{conversation_id}")
 async def get_conversation(conversation_id: int,
                            actor: Actor = Depends(get_current_actor),

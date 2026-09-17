@@ -1,9 +1,11 @@
-import { useNavigate } from 'react-router-dom'
 import { DEMO_ACTORS, saveActor, type Actor } from '../lib/actor'
 
 export function RolePickPage() {
-  const nav = useNavigate()
-  const pick = (a: Actor) => { saveActor(a); nav(a.role === 'user' ? '/chat' : '/merchant') }
+  const pick = (a: Actor) => {
+    saveActor(a)
+    // 整页跳转：身份切换无需保留的状态，reload 保证路由守卫读到最新身份
+    window.location.assign(a.role === 'user' ? '/chat' : '/merchant')
+  }
   return (
     <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center gap-3 p-6">
       <h1 className="mb-2 text-center text-xl font-semibold">选择身份</h1>

@@ -2,9 +2,12 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import { ChatPage } from './pages/ChatPage'
 import { MerchantPage } from './pages/MerchantPage'
 import { RolePickPage } from './pages/RolePickPage'
+import { loadActor } from './lib/actor'
 import type { Actor } from './types'
 
-export function AppRoutes({ actor }: { actor: Actor | null }) {
+export function AppRoutes() {
+  // 在 Router 内部读取：导航触发重渲染时自然拿到最新身份
+  const actor: Actor | null = loadActor()
   if (actor === null) {
     return (
       <Routes>

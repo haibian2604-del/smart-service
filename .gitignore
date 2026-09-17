@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+.mypy_cache/
+
+# Node
+node_modules/
+dist/
+.vite/
+
+# 本地工具状态（WorkBuddy 工作区数据）
+.workbuddy/
+
+# OS / 编辑器
+.DS_Store
+.idea/
+.vscode/

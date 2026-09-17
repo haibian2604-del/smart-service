@@ -54,7 +54,7 @@ export function MerchantPage({ actor }: { actor: Actor }) {
   }
 
   return (
-    <div className="mx-auto min-h-screen max-w-3xl bg-slate-50 p-4">
+    <div className="min-h-screen bg-slate-50 p-4">
       {/* 身份条：让租户隔离可被看见 */}
       <header className="mb-4 flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3">
         <div className="flex items-center gap-2">

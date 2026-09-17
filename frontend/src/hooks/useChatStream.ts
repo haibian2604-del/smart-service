@@ -8,8 +8,7 @@ export function useChatStream(conversationId: number | null) {
   const [streamingText, setStreamingText] = useState('')
   const [streaming, setStreaming] = useState(false)
   const [pendingTaskId, setPendingTaskId] = useState<number | null>(null)
-  const convRef = useRef(conversationId)
-  convRef.current = conversationId
+  const convRef = useRef<number | null>(conversationId)
 
   const send = useCallback(async (text: string) => {
     const actor = JSON.parse(localStorage.getItem('smart-service.actor') ?? 'null')
@@ -55,5 +54,4 @@ export function useChatStream(conversationId: number | null) {
     }
   }, [])
 
-  return { messages, send, streaming, streamingText, pendingTaskId, conversationId: convRef }
-}
+  return { messages, send, streaming, streamingText, pendingTaskId, conversationId: convRef }}

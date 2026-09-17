@@ -3,7 +3,7 @@ from decimal import Decimal
 import enum
 
 from sqlalchemy import CheckConstraint, ForeignKey, Numeric, Enum as SAEnum
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, PKMixin, TimestampMixin
 
@@ -35,11 +35,16 @@ class Order(PKMixin, TimestampMixin, Base):
     shipped_at: Mapped[datetime | None] = mapped_column()
     delivered_at: Mapped[datetime | None] = mapped_column()
 
+    items: Mapped[list["OrderItem"]] = relationship(back_populates="order")
+
 
 class OrderItem(PKMixin, Base):
     __tablename__ = "order_items"
 
     order_id: Mapped[int] = mapped_column(ForeignKey("orders.id"), nullable=False)
     product_id: Mapped[int] = mapped_column(ForeignKey("products.id"), nullable=False)
+
+    order: Mapped["Order"] = relationship(back_populates="items")
+    product: Mapped["Product"] = relationship()
     quantity: Mapped[int] = mapped_column(default=1)
     unit_price: Mapped[Decimal] = mapped_column(Numeric(10, 2))

@@ -18,6 +18,7 @@ class AgentState(TypedDict, total=False):
     order_no: str | None
     refund_amount: Decimal | None
     refund_draft: dict | None
+    refund_state: str | None         # 对外可读终态：refunded / rejected / draft
     human_task_id: int | None
     human_decision: str | None
     human_note: str | None

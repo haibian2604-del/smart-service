@@ -2,7 +2,7 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
 from app.core.config import get_settings
-from app.models import Base, Merchant, Order, OrderItem, OrderStatus, Product, User, UserRole
+from app.models import Base, Merchant, Order, OrderItem, OrderStatus, Product, Refund, User, UserRole
 
 
 @pytest.fixture(scope="session")
@@ -67,6 +67,9 @@ async def seeded(session):
 
     session.add(OrderItem(order_id=o1.id, product_id=p.id, quantity=1,
                           unit_price=Decimal("199.00")))
+    draft_refund = Refund(refund_no="#R2000", order_id=o1.id, user_id=demo.id,
+                          merchant_id=ma.id, reason="测试草稿", amount=Decimal("199.00"))
+    session.add(draft_refund)
     await session.flush()
 
     return SimpleNamespace(
@@ -82,4 +85,5 @@ async def seeded(session):
         shipped_order_no=o2.order_no,
         cancelled_order_no=o4.order_no,
         product_id=p.id,
+        draft_refund_id=draft_refund.id,
     )

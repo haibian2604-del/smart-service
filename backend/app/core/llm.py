@@ -16,7 +16,8 @@ class OMLXClient:
 
     async def complete(self, system: str, user: str) -> str:
         s = get_settings()
-        async with httpx.AsyncClient(base_url=s.llm_base_url, timeout=60) as client:
+        headers = {"Authorization": f"Bearer {s.llm_api_key}"} if s.llm_api_key != "none" else {}
+        async with httpx.AsyncClient(base_url=s.llm_base_url, timeout=60, headers=headers) as client:
             resp = await client.post("/chat/completions", json={
                 "model": s.llm_model,
                 "messages": [

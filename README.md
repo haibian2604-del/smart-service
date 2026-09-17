@@ -99,12 +99,18 @@ START → classify ─┬─ product  ──────────────
 | P2 工具层 | ✅ 已完成 |
 | P3 Agent 图 | ✅ 已完成 |
 | P4 API 层 | ✅ 已完成 |
-| P5 前端 | 未开始 |
-| P6 端到端串通 | 未开始 |
+| P5 前端 | ✅ 已完成 |
+| P6 端到端串通 | ✅ 已完成 |
 
 ## 快速开始
 
-代码已部分实现。后端启动：见上方「当前进度」；完整 RUNBOOK 待 P6 补充到 `doc/RUNBOOK.md`。
+见 [`doc/RUNBOOK.md`](doc/RUNBOOK.md)：oMLX 启动 → `make db-up migrate seed api web` → 五幕演示。
+
+```bash
+make db-up && make migrate && make seed
+make api    # 注意与 oMLX 端口冲突，见 RUNBOOK
+make web
+```
 
 ## 目录结构
 
@@ -114,7 +120,7 @@ smart-service/
 ├── doc/
 │   ├── ARCHITECTURE.md
 │   └── plans/
-├── backend/          # FastAPI + LangGraph（P0–P4 已落地，97 tests green）
+├── backend/          # FastAPI + LangGraph（101 tests green，含五幕端到端）
 │   ├── app/core/         # config / db / llm（oMLX 已连通）
 │   ├── app/models/       # 9 张 ORM 表
 │   ├── app/agent/        # 图组装 / classify·refund·human_review 等节点 / 7 工具

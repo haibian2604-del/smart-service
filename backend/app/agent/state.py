@@ -1,6 +1,7 @@
 from decimal import Decimal
 from typing import Annotated, Literal
 
+import operator
 from langchain_core.messages import AnyMessage
 from langgraph.graph.message import add_messages
 from typing_extensions import TypedDict
@@ -24,6 +25,7 @@ class AgentState(TypedDict, total=False):
     human_decision: str | None
     human_note: str | None
     triggering_rule: str | None
+    history: Annotated[list[dict], operator.add]  # 跨轮对话记忆（checkpoint 累积）
     degraded: bool
     reply: str | None
     widgets: list[dict]

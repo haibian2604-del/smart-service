@@ -6,7 +6,8 @@ from app.models import Conversation, Message
 
 async def respond_node(state: AgentState, *, session: AsyncSession) -> dict:
     """本轮出口：归一化 refund_state；有会话上下文时落库消息。"""
-    updates: dict = {"refund_state": state.get("refund_state")}
+    updates: dict = {"refund_state": state.get("refund_state"),
+                     "history": [{"role": "assistant", "content": state.get("reply") or ""}]}
 
     conversation_id = state.get("conversation_id")
     if conversation_id:

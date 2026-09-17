@@ -22,11 +22,12 @@ class SmartFakeLLM(FakeLLM):
     async def complete(self, system: str, user: str) -> str:
         self.calls += 1
         if "intent" in system:
-            if "退" in user:
+            cur = user.split("当前消息：")[-1]  # 只看当前消息，避免历史里的关键词污染
+            if "退" in cur:
                 return '{"intent":"refund"}'
-            if "订单" in user or "到哪" in user or "#A" in user:
+            if "订单" in cur or "到哪" in cur or "#A" in cur:
                 return '{"intent":"order"}'
-            if any(k in user for k in ("耳机", "键盘", "帐篷", "水壶", "商品", "价格")):
+            if any(k in cur for k in ("耳机", "键盘", "帐篷", "水壶", "商品", "价格")):
                 return '{"intent":"product"}'
             return '{"intent":"chitchat"}'
         if "商品列表" in user:

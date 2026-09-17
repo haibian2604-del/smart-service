@@ -16,8 +16,9 @@ async def order_node(state: AgentState, *, session: AsyncSession, llm) -> dict:
         if not orders:
             return {"reply": "您还没有任何订单，去商城逛逛吧！", "widgets": []}
         reply = await llm.complete(
-            "你是电商客服，用户询问自己买过哪些东西。根据订单列表（含商品明细）用两三句话自然总结，只输出这段话本身。",
-            str(orders),
+            "你是电商客服，用户在追问自己买过的订单/商品。"
+            "结合对话历史和订单列表（含商品明细）自然作答，只输出这段话本身。",
+            str((state.get("history") or [])[-6:]) + "\n订单列表：" + str(orders),
         )
         return {"reply": reply, "widgets": [{"kind": "order", "data": o} for o in orders]}
 

@@ -34,3 +34,23 @@ async def test_classify_falls_back_to_keyword_rule_when_llm_dead():
     out = await classify_node(state, llm=llm)
     assert out["intent"] == "refund"
     assert out["degraded"] is True
+
+
+async def test_classify_uses_history_for_follow_up():
+    llm = FakeLLM([])
+    """追问「它到哪了」应结合历史识别为订单查询。"""
+    from app.agent.state import new_state
+    from app.agent.scope import Scope
+
+    llm.responses = ['{"intent": "order"}']
+    state = new_state(scope=Scope.for_user(1), text="它到哪了")
+    state["history"] = [
+        {"role": "user", "content": "降噪耳机 Pro 多少钱"},
+        {"role": "assistant", "content": "降噪耳机 Pro 售价 399 元"},
+        {"role": "user", "content": "它到哪了"},
+    ]
+    out = await classify_node(state, llm=llm)
+    assert out["intent"] == "order"
+    system, user = llm.prompts[-1]
+    assert "降噪耳机 Pro 多少钱" in user      # 历史进入提示词
+    assert "当前消息：它到哪了" in user       # 当前消息单独标注

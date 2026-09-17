@@ -1,4 +1,4 @@
-from sqlalchemy import or_, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.agent.scope import Scope
@@ -22,8 +22,10 @@ async def search_products(session: AsyncSession, scope: Scope, *,
     """商品是平台公开信息，两个角色都可查，不做 tenant 过滤。"""
     stmt = select(Product)
     if keyword:
-        like = f"%{keyword}%"
-        stmt = stmt.where(or_(Product.name.ilike(like), Product.category.ilike(like)))
+        # 忽略空格匹配：关键词提取会剥掉空格（蓝牙耳机Air vs 蓝牙耳机 Air）
+        like = f"%{keyword.replace(' ', '')}%"
+        stmt = stmt.where(or_(func.replace(Product.name, ' ', '').ilike(like),
+                              func.replace(Product.category, ' ', '').ilike(like)))
     stmt = stmt.limit(limit)
     rows = (await session.execute(stmt)).scalars().all()
     return [_to_dict(p) for p in rows]

@@ -32,6 +32,10 @@ def _keyword_intent(text: str) -> str:
 
 async def classify_node(state: AgentState, *, llm) -> dict:
     text = state["text"]
+    # 跨轮记忆：把本轮之前的对话带给分类器，解决指代/省略型追问
+    hist = (state.get("history") or [])[:-1]  # 末尾是本轮用户消息自身
+    context = "\n".join(f"{h['role']}: {h['content']}" for h in hist[-6:])
+    user = f"对话历史：\n{context}\n\n当前消息：{text}" if context else text
     # 1. 正则抽槽位，不依赖模型
     updates: dict = {
         "order_no": extract_order_no(text),
@@ -41,7 +45,7 @@ async def classify_node(state: AgentState, *, llm) -> dict:
 
     # 2. LLM 分类，输出必须在封闭枚举内
     try:
-        out = await ask_json(llm, system=SYSTEM, user=text, schema=IntentOutput)
+        out = await ask_json(llm, system=SYSTEM, user=user, schema=IntentOutput)
         if out.intent in INTENTS:
             updates["intent"] = out.intent
             return updates

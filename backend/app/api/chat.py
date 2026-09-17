@@ -58,6 +58,7 @@ async def chat_stream(body: ChatRequest, request: Request,
                     "text": body.message,
                     "actor_role": scope.role, "actor_id": scope.user_id,
                     "merchant_id": scope.merchant_id, "conversation_id": conversation_id,
+                    "history": [{"role": "user", "content": body.message}],
                 }, config=config)
             except GraphInterrupt:
                 # interrupt 抛出：从 checkpoint 读回当前状态发事件

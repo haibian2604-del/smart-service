@@ -45,6 +45,34 @@ async def client(session, engine):
     app.dependency_overrides.pop(get_session, None)
 
 
+@pytest.fixture(scope="session")
+async def pg_checkpointer():
+    """真实 PG checkpoint（Task 31 端到端用）。每个线程用唯一 thread_id，无需清理。"""
+    from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
+
+    dsn = get_settings().database_url.replace("+asyncpg", "")
+    async with AsyncPostgresSaver.from_conn_string(dsn) as saver:
+        await saver.setup()
+        yield saver
+
+
+@pytest.fixture
+async def client_pg(session, pg_checkpointer):
+    """同 client，但用真实 PG checkpointer。"""
+    from collections.abc import AsyncIterator
+
+    from app.core.db import get_session
+    from app.main import app
+
+    async def _override_session() -> AsyncIterator[AsyncSession]:
+        yield session
+
+    app.dependency_overrides[get_session] = _override_session
+    app.state.checkpointer = pg_checkpointer
+    yield app
+    app.dependency_overrides.pop(get_session, None)
+
+
 @pytest.fixture
 async def override_llm():
     """把进程级 LLM 换成 FakeLLM。

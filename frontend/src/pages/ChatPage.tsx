@@ -13,7 +13,7 @@ export function ChatPage({ actor }: { actor: Actor }) {
   const { messages, send, streaming, streamingText, pendingTaskId, conversationId } = useChatStream(null)
 
   return (
-    <div className="mx-auto flex h-screen max-w-2xl flex-col bg-slate-50">
+    <div className="flex h-screen flex-col bg-slate-50">
       {/* 身份条 */}
       <header className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3">
         <div className="flex items-center gap-2">

@@ -11,8 +11,9 @@ export class ApiError extends Error {
 
 export async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const actor: Actor | null = loadActor()
+  if (!actor) throw new ApiError(401, '未选择身份，请返回首页选择')
   const headers = new Headers(init.headers)
-  if (actor) headers.set('X-Actor-Id', String(actor.id))
+  headers.set('X-Actor-Id', String(actor.id))
   if (init.body && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json')
 
   const resp = await fetch(path, { ...init, headers })

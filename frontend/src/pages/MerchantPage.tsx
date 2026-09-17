@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import type { Actor } from '../types'
 import { TRIGGER_LABEL } from '../types'
 import { ApiError, request } from '../lib/api'
@@ -14,14 +15,21 @@ interface Task {
 }
 
 export function MerchantPage({ actor }: { actor: Actor }) {
+  const nav = useNavigate()
   const [tasks, setTasks] = useState<Task[]>([])
   const [toast, setToast] = useState<string | null>(null)
   const [rejecting, setRejecting] = useState<number | null>(null)
   const [note, setNote] = useState('')
   const [busy, setBusy] = useState(false)
+  const [loadError, setLoadError] = useState<string | null>(null)
 
   const load = async () => {
-    setTasks(await request<Task[]>('/api/merchant/tasks?status=pending'))
+    try {
+      setTasks(await request<Task[]>('/api/merchant/tasks?status=pending'))
+      setLoadError(null)
+    } catch (e) {
+      setLoadError(e instanceof Error ? e.message : String(e))
+    }
   }
 
   useEffect(() => { void load() }, [])
@@ -58,7 +66,12 @@ export function MerchantPage({ actor }: { actor: Actor }) {
 
       <h1 className="mb-3 text-lg font-semibold text-slate-900">待审批工单</h1>
 
-      {tasks.length === 0 ? (
+      {loadError ? (
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-center text-sm text-red-700">
+          加载失败：{loadError}
+          <button onClick={() => nav('/')} className="ml-2 underline">重新选择身份</button>
+        </div>
+      ) : tasks.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center text-sm text-slate-500">
           暂无待审批工单
         </div>

@@ -1,10 +1,13 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { MerchantPage } from './MerchantPage'
+import { saveActor, DEMO_ACTORS } from '../lib/actor'
 
 const actor = { id: 2, role: 'merchant' as const, name: '青柠数码', merchantId: 1 }
+
+beforeEach(() => saveActor(actor))
 
 const TASK = {
   id: 7, type: 'refund_review', status: 'pending', thread_id: '3',

@@ -55,5 +55,10 @@ export function useChatStream(conversationId: number | null) {
     }
   }, [])
 
-  return { messages, send, streaming, streamingText, pendingTaskId, conversationId: convRef }
+  const appendMessage = useCallback((msg: { content: string; widgets?: Widget[] }) => {
+    setMessages(m => [...m, { id: crypto.randomUUID(), role: 'assistant', content: msg.content, widgets: msg.widgets ?? [], toolCalls: [] }])
+    setPendingTaskId(null)
+  }, [])
+
+  return { messages, send, streaming, streamingText, pendingTaskId, conversationId: convRef, appendMessage }
 }

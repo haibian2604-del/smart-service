@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { Actor } from '../types'
+import type { Actor, Widget } from '../types'
 import { MessageList } from '../components/MessageList'
 import { useChatStream } from '../hooks/useChatStream'
 import { usePolling } from '../hooks/usePolling'
@@ -10,7 +10,7 @@ const QUICK_PROMPTS = ['你们有蓝牙耳机吗', '我的订单 #A1002 到哪�
 
 export function ChatPage({ actor }: { actor: Actor }) {
   const [input, setInput] = useState('')
-  const { messages, send, streaming, streamingText, pendingTaskId, conversationId } = useChatStream(null)
+  const { messages, send, streaming, streamingText, pendingTaskId, conversationId, appendMessage } = useChatStream(null)
 
   return (
     <div className="flex h-screen flex-col bg-slate-50">
@@ -25,7 +25,7 @@ export function ChatPage({ actor }: { actor: Actor }) {
 
       {pendingTaskId !== null && (
         <HandoffBanner conversationId={conversationId.current} taskId={pendingTaskId}
-                       onResolved={() => location.reload()} />
+                       onFinal={appendMessage} />
       )}
 
       <MessageList messages={messages} streamingText={streamingText} />
@@ -66,17 +66,24 @@ export function ChatPage({ actor }: { actor: Actor }) {
   )
 }
 
-/** 转人工横幅：轮询 status，pending_human 转 false 后拉结果并刷新会话。 */
-export function HandoffBanner({ conversationId, taskId, onResolved }: {
+/** 转人工横幅：轮询 status，商家处理后拉取最终回复追加到聊天。 */
+export function HandoffBanner({ conversationId, taskId, onFinal }: {
   conversationId: number | null
   taskId: number
-  onResolved: () => void
+  onFinal: (msg: { content: string; widgets: Widget[] }) => void
 }) {
+  type ConvMsg = { role: string; content: string; widgets: Widget[] }
   usePolling(async () => {
     if (!conversationId) return false
     const s = await request<{ pending_human: boolean; task_id: number | null }>(
       `/api/conversations/${conversationId}/status`)
-    if (!s.pending_human) { onResolved(); return true }
+    if (!s.pending_human) {
+      const conv = await request<{ messages: ConvMsg[] }>(
+        `/api/conversations/${conversationId}`)
+      const last = [...conv.messages].reverse().find(m => m.role === 'assistant')
+      if (last) onFinal({ content: last.content, widgets: last.widgets })
+      return true
+    }
     return false
   }, 2000, true)
 

@@ -23,7 +23,7 @@ describe('ChatPage', () => {
   })
 
   it('shows handoff banner when a human task is pending', () => {
-    render(<HandoffBanner conversationId={3} taskId={7} onResolved={vi.fn()} />)
+    render(<HandoffBanner conversationId={3} taskId={7} onFinal={vi.fn()} />)
     expect(screen.getByText(/已转人工，等待商家审核/)).toBeInTheDocument()
   })
 

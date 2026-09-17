@@ -1,4 +1,4 @@
-# smart-service · 智能客服 Agent 系统
+# smart-service · 智能客服 Agent 系统（开发中）
 
 一个用于演示 **Agent 能力** 的智能客服系统：意图路由、工具调用、人工介入与中断恢复。
 
@@ -94,9 +94,9 @@ START → classify ─┬─ product  ──────────────
 |---|---|
 | 架构设计 | 已完成 |
 | 实施计划 | 已完成 |
-| P0 脚手架 | 未开始 |
-| P1 数据层 | 未开始 |
-| P2 工具层 | 未开始 |
+| P0 脚手架 | ✅ 已完成 |
+| P1 数据层 | ✅ 已完成 |
+| P2 工具层 | ✅ 已完成 |
 | P3 Agent 图 | 未开始 |
 | P4 API 层 | 未开始 |
 | P5 前端 | 未开始 |
@@ -104,7 +104,7 @@ START → classify ─┬─ product  ──────────────
 
 ## 快速开始
 
-代码尚未实现。启动步骤将在 P0–P6 完成后补充到 `doc/RUNBOOK.md`。
+代码已部分实现。后端启动：见上方「当前进度」；完整 RUNBOOK 待 P6 补充到 `doc/RUNBOOK.md`。
 
 ## 目录结构
 
@@ -114,6 +114,12 @@ smart-service/
 ├── doc/
 │   ├── ARCHITECTURE.md
 │   └── plans/
-├── backend/          # FastAPI + LangGraph（待建）
+├── backend/          # FastAPI + LangGraph（P0–P2 已落地，39 tests green）
+│   ├── app/core/         # config / db / (llm 待建)
+│   ├── app/models/       # 9 张 ORM 表
+│   ├── app/agent/        # scope / policy / tools/（7 工具已注册）
+│   ├── alembic/          # 异步迁移
+│   ├── scripts/seed.py   # 幂等演示数据
+│   └── tests/            # 39 个测试（FakeLLM 策略，事务回滚隔离）
 └── frontend/         # Vite + React（待建）
 ```

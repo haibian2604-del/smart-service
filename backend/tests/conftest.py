@@ -48,6 +48,11 @@ async def seeded(session):
                 price=Decimal("599.00"), stock=10)
     session.add(p)
     await session.flush()
+    for name, cat, price in [("蓝牙耳机 Air", "数码", "199.00"), ("机械键盘 K87", "数码", "399.00"),
+                             ("露营折叠椅", "户外", "129.00"), ("保温水壶 1L", "户外", "99.00")]:
+        session.add(Product(merchant_id=mb.id, name=name, category=cat,
+                            price=Decimal(price), stock=20))
+    await session.flush()
 
     def make_order(no, status, amount):
         o = Order(order_no=no, user_id=demo.id, merchant_id=ma.id,

@@ -97,8 +97,8 @@ START → classify ─┬─ product  ──────────────
 | P0 脚手架 | ✅ 已完成 |
 | P1 数据层 | ✅ 已完成 |
 | P2 工具层 | ✅ 已完成 |
-| P3 Agent 图 | 未开始 |
-| P4 API 层 | 未开始 |
+| P3 Agent 图 | ✅ 已完成 |
+| P4 API 层 | ✅ 已完成 |
 | P5 前端 | 未开始 |
 | P6 端到端串通 | 未开始 |
 
@@ -114,10 +114,11 @@ smart-service/
 ├── doc/
 │   ├── ARCHITECTURE.md
 │   └── plans/
-├── backend/          # FastAPI + LangGraph（P0–P2 已落地，39 tests green）
-│   ├── app/core/         # config / db / (llm 待建)
+├── backend/          # FastAPI + LangGraph（P0–P4 已落地，97 tests green）
+│   ├── app/core/         # config / db / llm（oMLX 已连通）
 │   ├── app/models/       # 9 张 ORM 表
-│   ├── app/agent/        # scope / policy / tools/（7 工具已注册）
+│   ├── app/agent/        # 图组装 / classify·refund·human_review 等节点 / 7 工具
+│   ├── app/api/          # SSE 对话流 · 会话轮询 · 商家审批（interrupt/resume 闭环已跑通）
 │   ├── alembic/          # 异步迁移
 │   ├── scripts/seed.py   # 幂等演示数据
 │   └── tests/            # 39 个测试（FakeLLM 策略，事务回滚隔离）

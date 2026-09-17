@@ -2,11 +2,14 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
 from app.core.config import get_settings
+from app.models import Base
 
 
 @pytest.fixture(scope="session")
 async def engine():
     eng = create_async_engine(get_settings().test_database_url, pool_pre_ping=True)
+    async with eng.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
     yield eng
     await eng.dispose()
 

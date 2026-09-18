@@ -19,13 +19,15 @@ def _to_dict(p: Product) -> dict:
 
 async def search_products(session: AsyncSession, scope: Scope, *,
                           keyword: str | None, limit: int = 5) -> list[dict]:
-    """商品是平台公开信息，两个角色都可查，不做 tenant 过滤。"""
+    """商品是平台公开信息，两个角色都可查，不做 tenant 过滤。无关键词时按库存降序取热门。"""
     stmt = select(Product)
     if keyword:
         # 忽略空格匹配：关键词提取会剥掉空格（蓝牙耳机Air vs 蓝牙耳机 Air）
         like = f"%{keyword.replace(' ', '')}%"
         stmt = stmt.where(or_(func.replace(Product.name, ' ', '').ilike(like),
                               func.replace(Product.category, ' ', '').ilike(like)))
+    else:
+        stmt = stmt.order_by(Product.stock.desc())  # ponytail: 无销量字段，用库存近似热门
     stmt = stmt.limit(limit)
     rows = (await session.execute(stmt)).scalars().all()
     return [_to_dict(p) for p in rows]

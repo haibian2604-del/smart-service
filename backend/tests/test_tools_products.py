@@ -20,3 +20,13 @@ async def test_search_empty_keyword_returns_top_n(session, seeded):
 
 async def test_product_detail_not_found_returns_none(session, seeded):
     assert await get_product_detail(session, Scope.for_user(seeded.user_id), product_id=99999) is None
+
+
+async def test_browse_all_returns_hot_products_by_stock(session, seeded):
+    """无关键词（浏览型）按库存降序取热门，limit 生效。"""
+    from app.agent.tools.products import search_products
+
+    all_hot = await search_products(session, Scope.for_user(seeded.user_id), keyword=None, limit=3)
+    assert len(all_hot) == 3
+    stocks = [p["stock"] for p in all_hot]
+    assert stocks == sorted(stocks, reverse=True)

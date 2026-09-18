@@ -86,6 +86,25 @@ async def chat_stream(body: ChatRequest, request: Request,
     return EventSourceResponse(gen(), headers={"X-Conversation-Id": str(body.conversation_id or 0)})
 
 
+@router.get("/api/conversations")
+async def list_conversations(actor: Actor = Depends(get_current_actor),
+                             session: AsyncSession = Depends(get_session)):
+    """当前用户的历史会话列表，标题取首条用户消息。"""
+    from sqlalchemy import select
+    from app.models import Conversation, Message
+
+    convs = (await session.execute(
+        select(Conversation).where(Conversation.user_id == actor.id)
+        .order_by(Conversation.id.desc()).limit(20))).scalars().all()
+    items = []
+    for c in convs:
+        first = (await session.execute(
+            select(Message).where(Message.conversation_id == c.id, Message.role == "user")
+            .order_by(Message.id).limit(1))).scalar_one_or_none()
+        items.append({"id": c.id, "title": (first.content[:30] if first else "新对话")})
+    return items
+
+
 @router.get("/api/conversations/{conversation_id}/status")
 async def get_conversation_status(conversation_id: int,
                                   actor: Actor = Depends(get_current_actor),

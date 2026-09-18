@@ -60,5 +60,12 @@ export function useChatStream(conversationId: number | null) {
     setPendingTaskId(null)
   }, [])
 
-  return { messages, send, streaming, streamingText, pendingTaskId, conversationId: convRef, appendMessage }
+  const loadConversation = useCallback((id: number, msgs: Message[]) => {
+    convRef.current = id
+    setMessages(msgs)
+    setPendingTaskId(null)
+    setStreamingText('')
+  }, [])
+
+  return { messages, send, streaming, streamingText, pendingTaskId, conversationId: convRef, appendMessage, loadConversation }
 }

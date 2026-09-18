@@ -48,3 +48,16 @@ async def test_chat_stream_unknown_actor_401(client):
         resp = await c.post("/api/chat/stream", json={"message": "hi"},
                             headers={"X-Actor-Id": "999999"})
     assert resp.status_code == 401
+
+
+async def test_list_conversations_with_titles(client, seeded):
+    """历史会话列表：只含本人会话，标题取首条用户消息。"""
+    transport = ASGITransport(app=client)
+    async with AsyncClient(transport=transport, base_url="http://test") as c:
+        await c.post("/api/chat/stream", json={"message": "有耳机吗"},
+                     headers={"X-Actor-Id": str(seeded.user_id)})
+        r = await c.get("/api/conversations", headers={"X-Actor-Id": str(seeded.user_id)})
+    assert r.status_code == 200
+    items = r.json()
+    assert isinstance(items, list) and items
+    assert all(i['title'] for i in items)

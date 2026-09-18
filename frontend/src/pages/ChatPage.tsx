@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { Actor, Widget } from '../types'
 import { MessageList } from '../components/MessageList'
 import { useChatStream } from '../hooks/useChatStream'
@@ -10,7 +10,21 @@ const QUICK_PROMPTS = ['你们有蓝牙耳机吗', '我的订单 #A1002 到哪�
 
 export function ChatPage({ actor }: { actor: Actor }) {
   const [input, setInput] = useState('')
-  const { messages, send, streaming, streamingText, pendingTaskId, conversationId, appendMessage } = useChatStream(null)
+  const [convs, setConvs] = useState<{ id: number; title: string }[]>([])
+  const { messages, send, streaming, streamingText, pendingTaskId, conversationId, appendMessage, loadConversation } = useChatStream(null)
+
+  useEffect(() => {
+    request<{ id: number; title: string }[]>('/api/conversations').then(setConvs).catch(() => {})
+  }, [])
+
+  const openConversation = async (id: number) => {
+    type ConvMsg = { id: number; role: string; content: string; widgets: { kind: string; data: unknown }[] }
+    const conv = await request<{ messages: ConvMsg[] }>(`/api/conversations/${id}`)
+    loadConversation(id, conv.messages.map(m => ({
+      id: String(m.id), role: m.role as 'user' | 'assistant', content: m.content,
+      widgets: m.widgets as Widget[], toolCalls: [],
+    })))
+  }
 
   return (
     <div className="flex h-screen flex-col bg-slate-50">
@@ -19,6 +33,17 @@ export function ChatPage({ actor }: { actor: Actor }) {
         <div className="flex items-center gap-2">
           <span className="font-medium text-slate-900">{actor.name}</span>
           <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">消费者</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <select aria-label="历史会话"
+                  className="max-w-40 rounded-lg border border-slate-200 px-2 py-1 text-xs text-slate-600"
+                  value=""
+                  onChange={e => { if (e.target.value) void openConversation(Number(e.target.value)) }}>
+            <option value="">历史会话</option>
+            {convs.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
+          </select>
+          <button onClick={() => loadConversation(0, [])}
+                  className="rounded-lg px-2 py-1 text-xs text-slate-600 hover:bg-slate-100">新对话</button>
         </div>
         <SwitchIdentityButton />
       </header>

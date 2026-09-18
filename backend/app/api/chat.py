@@ -105,6 +105,31 @@ async def list_conversations(actor: Actor = Depends(get_current_actor),
     return items
 
 
+@router.delete("/api/conversations/{conversation_id}")
+async def delete_conversation(conversation_id: int,
+                              actor: Actor = Depends(get_current_actor),
+                              session: AsyncSession = Depends(get_session)):
+    """删除本人会话：消息、会话及其 LangGraph checkpoint。"""
+    from fastapi import HTTPException
+    from sqlalchemy import delete, select, text
+    from app.models import Conversation, Message
+
+    conv = await session.get(Conversation, conversation_id)
+    if conv is None or conv.user_id != actor.id:
+        raise HTTPException(status_code=404)
+    await session.execute(delete(Message).where(Message.conversation_id == conversation_id))
+    await session.delete(conv)
+    thread_id = str(conversation_id)
+    for table in ("checkpoints", "checkpoint_blobs", "checkpoint_writes"):
+        try:
+            async with session.begin_nested():  # 测试库可能无 checkpoint 表，容忍缺失
+                await session.execute(text(f"DELETE FROM {table} WHERE thread_id = :tid"), {"tid": thread_id})
+        except Exception:
+            pass
+    await session.commit()
+    return {"ok": True}
+
+
 @router.get("/api/conversations/{conversation_id}/status")
 async def get_conversation_status(conversation_id: int,
                                   actor: Actor = Depends(get_current_actor),

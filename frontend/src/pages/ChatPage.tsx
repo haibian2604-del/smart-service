@@ -44,6 +44,16 @@ export function ChatPage({ actor }: { actor: Actor }) {
           </select>
           <button onClick={() => loadConversation(0, [])}
                   className="rounded-lg px-2 py-1 text-xs text-slate-600 hover:bg-slate-100">新对话</button>
+          {conversationId.current !== null && conversationId.current > 0 && (
+            <button aria-label="删除当前会话" title="删除当前会话"
+                    onClick={async () => {
+                      if (!window.confirm('确定删除当前会话及其全部聊天记录？')) return
+                      await request(`/api/conversations/${conversationId.current}`, { method: 'DELETE' })
+                      loadConversation(0, [])
+                      request<{ id: number; title: string }[]>('/api/conversations').then(setConvs).catch(() => {})
+                    }}
+                    className="rounded-lg px-2 py-1 text-xs text-red-500 hover:bg-red-50">删除</button>
+          )}
         </div>
         <SwitchIdentityButton />
       </header>

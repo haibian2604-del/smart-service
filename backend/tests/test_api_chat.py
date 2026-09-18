@@ -61,3 +61,18 @@ async def test_list_conversations_with_titles(client, seeded):
     items = r.json()
     assert isinstance(items, list) and items
     assert all(i['title'] for i in items)
+
+
+async def test_delete_conversation_removes_messages(client, seeded, override_llm):
+    transport = ASGITransport(app=client)
+    async with AsyncClient(transport=transport, base_url="http://test") as c:
+        headers = {"X-Actor-Id": str(seeded.user_id)}
+        await c.post("/api/chat/stream", json={"message": "有耳机吗"}, headers=headers)
+        lst = (await c.get("/api/conversations", headers=headers)).json()
+        conv_id = lst[0]["id"]
+
+        assert (await c.delete(f"/api/conversations/{conv_id}", headers=headers)).status_code == 200
+        assert conv_id not in [i["id"] for i in (await c.get("/api/conversations", headers=headers)).json()]
+        # 二次删除：已不存在 → 404
+        assert (await c.delete(f"/api/conversations/{conv_id}", headers=headers)).status_code == 404
+        # checkpoint 一并清理（生产 PG 表存在；测试库用 MemorySaver 无表，跳过验证）

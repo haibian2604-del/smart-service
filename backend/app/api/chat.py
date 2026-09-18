@@ -38,6 +38,8 @@ async def chat_stream(body: ChatRequest, request: Request,
     from langgraph.checkpoint.memory import MemorySaver
 
     async def gen():
+        import asyncio
+
         try:
             conversation_id = await ensure_conversation(session, user_id=actor.id,
                                                         conversation_id=body.conversation_id)
@@ -48,28 +50,43 @@ async def chat_stream(body: ChatRequest, request: Request,
             yield _sse("meta", conversation_id=conversation_id)
 
             checkpointer = getattr(request.app.state, "checkpointer", None) or MemorySaver()
-            graph = build_graph(session=session, llm=get_llm(), checkpointer=checkpointer)
+            queue: asyncio.Queue = asyncio.Queue()
+            graph = build_graph(session=session, llm=get_llm(), checkpointer=checkpointer,
+                                emit=queue.put_nowait)
             scope = actor.to_scope()
             config = {"configurable": {"thread_id": str(conversation_id)}}
 
             final = None
-            try:
-                final = await graph.ainvoke({
-                    "text": body.message,
-                    "actor_role": scope.role, "actor_id": scope.user_id,
-                    "merchant_id": scope.merchant_id, "conversation_id": conversation_id,
-                    "history": [{"role": "user", "content": body.message}],
-                }, config=config)
-            except GraphInterrupt:
-                # interrupt 抛出：从 checkpoint 读回当前状态发事件
-                snap = await graph.aget_state(config)
-                final = snap.values
+            async def _run():
+                nonlocal final
+                try:
+                    final = await graph.ainvoke({
+                        "text": body.message,
+                        "actor_role": scope.role, "actor_id": scope.user_id,
+                        "merchant_id": scope.merchant_id, "conversation_id": conversation_id,
+                        "history": [{"role": "user", "content": body.message}],
+                    }, config=config)
+                except GraphInterrupt:
+                    # interrupt 抛出：从 checkpoint 读回当前状态发事件
+                    snap = await graph.aget_state(config)
+                    final = snap.values
+
+            task = asyncio.create_task(_run())
+            streamed_len = 0
+            while not task.done():
+                try:
+                    tok = await asyncio.wait_for(queue.get(), timeout=0.05)
+                except asyncio.TimeoutError:
+                    continue
+                streamed_len += len(tok)
+                yield _sse("token", text=tok)
+            await task
 
             if final:
                 for w in final.get("widgets") or []:
                     yield _sse("widget", kind=w["kind"], data=w["data"])
                 reply = final.get("reply") or ""
-                for piece in _chunk(reply):
+                for piece in _chunk(reply[streamed_len:]):  # 已流式下发的部分不重复发
                     yield _sse("token", text=piece)
                 if final.get("__interrupt__"):
                     task_id = final["__interrupt__"][0].value.get("task_id")

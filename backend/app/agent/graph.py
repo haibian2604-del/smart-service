@@ -22,15 +22,15 @@ def route_after_refund(state: AgentState) -> str:
 
 
 def build_graph(*, session: AsyncSession, llm,
-                checkpointer: BaseCheckpointSaver) -> CompiledStateGraph:
+                checkpointer: BaseCheckpointSaver, emit=None) -> CompiledStateGraph:
     g = StateGraph(AgentState)
 
     g.add_node("classify", partial(classify.classify_node, llm=llm))
-    g.add_node("product_node", partial(product.product_node, session=session, llm=llm))
-    g.add_node("order_node", partial(order.order_node, session=session, llm=llm))
+    g.add_node("product_node", partial(product.product_node, session=session, llm=llm, emit=emit))
+    g.add_node("order_node", partial(order.order_node, session=session, llm=llm, emit=emit))
     g.add_node("refund_node", partial(refund.refund_node, session=session, llm=llm))
-    g.add_node("chitchat_node", partial(chitchat.chitchat_node, session=session, llm=llm))
-    g.add_node("unknown_node", partial(_unknown_node, llm=llm))
+    g.add_node("chitchat_node", partial(chitchat.chitchat_node, session=session, llm=llm, emit=emit))
+    g.add_node("unknown_node", partial(_unknown_node, llm=llm, emit=emit))
     g.add_node("human_review", partial(_human_review, session=session))
     g.add_node("finalize_refund", partial(human.finalize_refund_node, session=session))
     g.add_node("respond", partial(respond.respond_node, session=session))
@@ -59,6 +59,6 @@ async def _human_review(state: AgentState, config: RunnableConfig, *, session: A
     return await human.human_review_node(state, session=session, thread_id=thread_id)
 
 
-async def _unknown_node(state: AgentState, *, llm) -> dict:
-    reply = await llm.complete("你是电商客服，简短回复。", "用户说了无法理解的话，请礼貌引导：\n" + state["text"])
+async def _unknown_node(state: AgentState, *, llm, emit=None) -> dict:
+    reply = await llm.stream("你是电商客服，简短回复。", "用户说了无法理解的话，请礼貌引导：\n" + state["text"], on_token=emit or (lambda t: None))
     return {"reply": reply, "widgets": []}

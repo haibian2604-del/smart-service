@@ -14,6 +14,12 @@ class FakeLLM:
             return ""
         return self._responses.pop(0)
 
+    async def stream(self, system: str, user: str, on_token) -> str:
+        out = await self.complete(system, user)
+        if out:
+            on_token(out)
+        return out
+
 
 
 class SmartFakeLLM(FakeLLM):

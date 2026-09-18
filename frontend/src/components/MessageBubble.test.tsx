@@ -20,3 +20,18 @@ describe('MessageBubble', () => {
     expect(container.querySelector('.animate-pulse')).toBeTruthy()
   })
 })
+
+describe('markdown rendering', () => {
+  it('renders assistant markdown (list, bold, code)', () => {
+    render(<MessageBubble role="assistant" content={'- **蓝牙耳机**：`199` 元\n\n详见[商城](https://x.y)'} widgets={[]} toolCalls={[]} />)
+    expect(screen.getByRole('list')).toBeInTheDocument()
+    expect(screen.getByText('蓝牙耳机').tagName).toBe('STRONG')
+    expect(screen.getByText('199').tagName).toBe('CODE')
+    expect(screen.getByRole('link')).toHaveAttribute('href', 'https://x.y')
+  })
+
+  it('user messages stay plain text', () => {
+    render(<MessageBubble role="user" content="- 不是列表" widgets={[]} toolCalls={[]} />)
+    expect(screen.queryByRole('list')).not.toBeInTheDocument()
+  })
+})

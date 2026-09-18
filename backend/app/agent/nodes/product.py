@@ -6,7 +6,12 @@ from app.agent.state import AgentState
 from app.agent.tools.products import search_products
 
 
-_REPLY_PROMPT = "把以下商品列表组织成一句简短自然的客服回复，只输出这句话本身：\n{data}"
+_REPLY_PROMPT = """用户在询问是否有某类商品在售。请按以下结构用自然中文回复：
+1. 先直接回答有没有（例如「有的」/「暂时没有」）；
+2. 有几款就逐款简要介绍（名称 + 价格 + 一句卖点），不要大段罗列参数；
+3. 结尾邀请用户了解更多或直接下单。
+只输出回复本身，不要标题和序号。商品数据：
+{data}"""
 
 
 async def product_node(state: AgentState, *, session: AsyncSession, llm, emit=None) -> dict:

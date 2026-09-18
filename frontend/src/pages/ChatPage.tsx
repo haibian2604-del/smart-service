@@ -5,6 +5,7 @@ import { useChatStream } from '../hooks/useChatStream'
 import { usePolling } from '../hooks/usePolling'
 import { request } from '../lib/api'
 import { SwitchIdentityButton } from '../components/SwitchIdentityButton'
+import { ConfirmDialog } from '../components/ConfirmDialog'
 
 const QUICK_PROMPTS = ['你们有蓝牙耳机吗', '我的订单 #A1002 到哪了', '订单 #A1002 我要退款']
 
@@ -12,6 +13,7 @@ export function ChatPage({ actor }: { actor: Actor }) {
   const [input, setInput] = useState('')
   const [convs, setConvs] = useState<{ id: number; title: string }[]>([])
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [pendingDelete, setPendingDelete] = useState<number | null>(null)
   const { messages, send, streaming, streamingText, pendingTaskId, conversationId, appendMessage, loadConversation } = useChatStream(null)
 
   const refreshConvs = () => request<{ id: number; title: string }[]>('/api/conversations').then(setConvs).catch(() => {})
@@ -27,9 +29,9 @@ export function ChatPage({ actor }: { actor: Actor }) {
   }
 
   const removeConversation = async (id: number) => {
-    if (!window.confirm('确定删除该会话及其全部聊天记录？')) return
     await request(`/api/conversations/${id}`, { method: 'DELETE' })
     if (conversationId.current === id) loadConversation(0, [])
+    setPendingDelete(null)
     refreshConvs()
   }
 
@@ -56,7 +58,7 @@ export function ChatPage({ actor }: { actor: Actor }) {
                   {c.title}
                 </button>
                 <button aria-label={`删除会话 ${c.title}`} title="删除"
-                        onClick={() => void removeConversation(c.id)}
+                        onClick={() => setPendingDelete(c.id)}
                         className="mr-1 hidden px-2 py-1 text-xs text-red-400 hover:text-red-600 group-hover:block">✕</button>
               </div>
             ))}
@@ -68,6 +70,12 @@ export function ChatPage({ actor }: { actor: Actor }) {
                 onClick={() => setSidebarOpen(true)}
                 className="w-10 shrink-0 border-r border-slate-200 bg-white text-slate-500 hover:bg-slate-100">☰</button>
       )}
+
+      {/* 删除确认弹窗 */}
+      <ConfirmDialog open={pendingDelete !== null} title="删除会话"
+                     message="将删除该会话及其全部聊天记录，此操作不可恢复。"
+                     onConfirm={() => { if (pendingDelete !== null) void removeConversation(pendingDelete) }}
+                     onCancel={() => setPendingDelete(null)} />
 
       {/* 主聊天区 */}
       <div className="flex min-w-0 flex-1 flex-col">

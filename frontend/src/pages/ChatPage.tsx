@@ -11,11 +11,11 @@ const QUICK_PROMPTS = ['你们有蓝牙耳机吗', '我的订单 #A1002 到哪�
 export function ChatPage({ actor }: { actor: Actor }) {
   const [input, setInput] = useState('')
   const [convs, setConvs] = useState<{ id: number; title: string }[]>([])
+  const [sidebarOpen, setSidebarOpen] = useState(true)
   const { messages, send, streaming, streamingText, pendingTaskId, conversationId, appendMessage, loadConversation } = useChatStream(null)
 
-  useEffect(() => {
-    request<{ id: number; title: string }[]>('/api/conversations').then(setConvs).catch(() => {})
-  }, [])
+  const refreshConvs = () => request<{ id: number; title: string }[]>('/api/conversations').then(setConvs).catch(() => {})
+  useEffect(() => { refreshConvs() }, [])
 
   const openConversation = async (id: number) => {
     type ConvMsg = { id: number; role: string; content: string; widgets: { kind: string; data: unknown }[] }
@@ -26,34 +26,55 @@ export function ChatPage({ actor }: { actor: Actor }) {
     })))
   }
 
+  const removeConversation = async (id: number) => {
+    if (!window.confirm('确定删除该会话及其全部聊天记录？')) return
+    await request(`/api/conversations/${id}`, { method: 'DELETE' })
+    if (conversationId.current === id) loadConversation(0, [])
+    refreshConvs()
+  }
+
   return (
-    <div className="flex h-screen flex-col bg-slate-50">
-      {/* 身份条 */}
+    <div className="flex h-screen bg-slate-50">
+      {/* 历史会话侧边栏 */}
+      {sidebarOpen ? (
+        <aside className="flex w-60 flex-col border-r border-slate-200 bg-white">
+          <div className="flex items-center justify-between border-b border-slate-200 px-3 py-3">
+            <span className="text-sm font-medium text-slate-900">历史会话</span>
+            <button aria-label="收起历史会话" title="收起"
+                    onClick={() => setSidebarOpen(false)}
+                    className="rounded-lg px-2 py-1 text-xs text-slate-500 hover:bg-slate-100">« 收起</button>
+          </div>
+          <button onClick={() => loadConversation(0, [])}
+                  className="mx-3 mt-3 rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-700 hover:border-sky-400 hover:text-sky-700">
+            ＋ 新对话
+          </button>
+          <nav className="flex-1 space-y-1 overflow-y-auto p-3" aria-label="历史会话列表">
+            {convs.map(c => (
+              <div key={c.id} className={`group flex items-center rounded-lg ${conversationId.current === c.id ? 'bg-sky-50' : 'hover:bg-slate-50'}`}>
+                <button onClick={() => void openConversation(c.id)}
+                        className="flex-1 truncate px-3 py-2 text-left text-sm text-slate-700" title={c.title}>
+                  {c.title}
+                </button>
+                <button aria-label={`删除会话 ${c.title}`} title="删除"
+                        onClick={() => void removeConversation(c.id)}
+                        className="mr-1 hidden px-2 py-1 text-xs text-red-400 hover:text-red-600 group-hover:block">✕</button>
+              </div>
+            ))}
+            {convs.length === 0 && <p className="px-3 py-2 text-xs text-slate-400">暂无历史会话</p>}
+          </nav>
+        </aside>
+      ) : (
+        <button aria-label="展开历史会话" title="展开历史会话"
+                onClick={() => setSidebarOpen(true)}
+                className="w-10 shrink-0 border-r border-slate-200 bg-white text-slate-500 hover:bg-slate-100">☰</button>
+      )}
+
+      {/* 主聊天区 */}
+      <div className="flex min-w-0 flex-1 flex-col">
       <header className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3">
         <div className="flex items-center gap-2">
           <span className="font-medium text-slate-900">{actor.name}</span>
           <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">消费者</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <select aria-label="历史会话"
-                  className="max-w-40 rounded-lg border border-slate-200 px-2 py-1 text-xs text-slate-600"
-                  value=""
-                  onChange={e => { if (e.target.value) void openConversation(Number(e.target.value)) }}>
-            <option value="">历史会话</option>
-            {convs.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
-          </select>
-          <button onClick={() => loadConversation(0, [])}
-                  className="rounded-lg px-2 py-1 text-xs text-slate-600 hover:bg-slate-100">新对话</button>
-          {conversationId.current !== null && conversationId.current > 0 && (
-            <button aria-label="删除当前会话" title="删除当前会话"
-                    onClick={async () => {
-                      if (!window.confirm('确定删除当前会话及其全部聊天记录？')) return
-                      await request(`/api/conversations/${conversationId.current}`, { method: 'DELETE' })
-                      loadConversation(0, [])
-                      request<{ id: number; title: string }[]>('/api/conversations').then(setConvs).catch(() => {})
-                    }}
-                    className="rounded-lg px-2 py-1 text-xs text-red-500 hover:bg-red-50">删除</button>
-          )}
         </div>
         <SwitchIdentityButton />
       </header>
@@ -97,6 +118,7 @@ export function ChatPage({ actor }: { actor: Actor }) {
           发送
         </button>
       </form>
+      </div>
     </div>
   )
 }

@@ -6,6 +6,7 @@ import { usePolling } from '../hooks/usePolling'
 import { request } from '../lib/api'
 import { SwitchIdentityButton } from '../components/SwitchIdentityButton'
 import { ConfirmDialog } from '../components/ConfirmDialog'
+import { Logo } from '../components/Logo'
 
 const QUICK_PROMPTS = ['你们有蓝牙耳机吗', '我的订单 #A1002 到哪了', '订单 #A1002 我要退款']
 
@@ -41,7 +42,7 @@ export function ChatPage({ actor }: { actor: Actor }) {
       {sidebarOpen ? (
         <aside className="flex w-60 flex-col border-r border-slate-200 bg-white">
           <div className="flex items-center justify-between border-b border-slate-200 px-3 py-3">
-            <span className="text-sm font-medium text-slate-900">历史会话</span>
+            <span className="flex items-center gap-2 text-sm font-medium text-slate-900"><Logo /> 智能客服</span>
             <button aria-label="收起历史会话" title="收起"
                     onClick={() => setSidebarOpen(false)}
                     className="rounded-lg px-2 py-1 text-xs text-slate-500 hover:bg-slate-100">« 收起</button>
@@ -68,7 +69,10 @@ export function ChatPage({ actor }: { actor: Actor }) {
       ) : (
         <button aria-label="展开历史会话" title="展开历史会话"
                 onClick={() => setSidebarOpen(true)}
-                className="w-10 shrink-0 border-r border-slate-200 bg-white text-slate-500 hover:bg-slate-100">☰</button>
+                className="flex w-10 shrink-0 flex-col items-center gap-2 border-r border-slate-200 bg-white py-3 text-slate-500 hover:bg-slate-100">
+          <Logo size={22} />
+          <span>☰</span>
+        </button>
       )}
 
       {/* 删除确认弹窗 */}

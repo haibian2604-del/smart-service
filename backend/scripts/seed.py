@@ -1,4 +1,4 @@
-"""幂等演示数据：2 商家、1 演示用户、2 商家账号、12 商品、8 订单。
+"""幂等演示数据：2 商家、1 演示用户、2 商家账号、22 商品、12 订单。
 
 用法：uv run python -m scripts.seed
 """
@@ -26,6 +26,11 @@ PRODUCTS = {
         ("4K 显示器 27\"", "数码", "1599.00", 8, "IPS，Type-C 90W"),
         ("无线充电板", "数码", "89.00", 100, "15W 快充"),
         ("USB-C 扩展坞", "数码", "249.00", 30, "8 合 1，千兆网口"),
+        ("智能手表 Watch S", "数码", "899.00", 18, "血氧心率，14 天续航"),
+        ("便携音箱 Boom", "数码", "299.00", 35, "IPX7 防水，24h 播放"),
+        ("电动牙刷 Sonic", "数码", "179.00", 66, "声波震动，5 模式"),
+        ("移动电源 2 万毫安", "数码", "129.00", 120, "22.5W 快充，双向 Type-C"),
+        ("桌面显示器支架", "数码", "159.00", 45, "铝合金，气弹簧升降"),
     ],
     "merchant-b": [
         ("户外帐篷 3 人", "户外", "459.00", 12, "双层的晒，3kg"),
@@ -34,6 +39,11 @@ PRODUCTS = {
         ("头灯 1200 流明", "户外", "159.00", 60, "IPX8 防水"),
         ("露营折叠椅", "户外", "129.00", 80, "铝合金骨架"),
         ("保温水壶 1L", "户外", "99.00", 90, "24h 保温"),
+        ("防潮垫 加厚", "户外", "79.00", 110, "铝膜反射，加厚 5cm"),
+        ("户外冲锋衣", "户外", "699.00", 22, "三合一，防风防水"),
+        ("快干毛巾 L", "户外", "39.00", 150, "超细纤维，速干抑菌"),
+        ("野餐垫 2x2m", "户外", "69.00", 95, "加厚 PE，防潮耐磨"),
+        ("驱蚊灯 充电款", "户外", "49.00", 88, "物理驱蚊，USB 充电"),
     ],
 }
 
@@ -47,6 +57,10 @@ ORDERS = [
     ("#A1006", "merchant-b", OrderStatus.DELIVERED, "459.00"), # 已签收转人工
     ("#A1007", "merchant-b", OrderStatus.PAID, "329.00"),
     ("#A1008", "merchant-a", OrderStatus.CANCELLED, "249.00"), # 不可退
+    ("#A1009", "merchant-b", OrderStatus.PAID, "699.00"),
+    ("#A1010", "merchant-a", OrderStatus.DELIVERED, "179.00"), # 已签收转人工
+    ("#A1011", "merchant-b", OrderStatus.SHIPPED, "39.00"),
+    ("#A1012", "merchant-a", OrderStatus.PENDING, "299.00"),   # 待支付，不可退
 ]
 
 
@@ -94,10 +108,14 @@ async def seed(session) -> None:
                       total_amount=Decimal(total))
             session.add(o)
             await session.flush()
-            # 每单挂一条 order_item：取该商家第一个商品
+            # 每单挂一条 order_item：按订单金额匹配该商家商品（无匹配则取第一个）
             p = (await session.execute(
-                select(Product).where(Product.merchant_id == merchants[slug].id)
-                .limit(1))).scalar_one()
+                select(Product).where(Product.merchant_id == merchants[slug].id,
+                                      Product.price == o.total_amount)
+                .limit(1))).scalar_one_or_none() \
+                or (await session.execute(
+                    select(Product).where(Product.merchant_id == merchants[slug].id)
+                    .limit(1))).scalar_one()
             session.add(OrderItem(order_id=o.id, product_id=p.id, quantity=1,
                                   unit_price=o.total_amount))
 

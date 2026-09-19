@@ -4,6 +4,7 @@ import { MessageList } from '../components/MessageList'
 import { useChatStream } from '../hooks/useChatStream'
 import { usePolling } from '../hooks/usePolling'
 import { loadSelectedMerchant, MERCHANTS } from '../lib/actor'
+import { saveSelectedMerchant } from '../lib/actor'
 import { request } from '../lib/api'
 import { SwitchIdentityButton } from '../components/SwitchIdentityButton'
 import { ConfirmDialog } from '../components/ConfirmDialog'
@@ -92,6 +93,9 @@ export function ChatPage({ actor }: { actor: Actor }) {
       <div className="flex min-w-0 flex-1 flex-col">
       <header className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3">
         <div className="flex items-center gap-2">
+          <button aria-label="返回选择商家" title="返回选择商家"
+                  onClick={() => { saveSelectedMerchant(merchantId); window.location.assign('/pick-merchant') }}
+                  className="rounded-lg px-2 py-1 text-sm text-slate-600 hover:bg-slate-100">←</button>
           <span className="font-medium text-slate-900">{actor.name}</span>
           <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">消费者</span>
         </div>

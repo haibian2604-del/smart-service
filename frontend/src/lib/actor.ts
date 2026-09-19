@@ -2,6 +2,19 @@ import type { Actor } from '../types'
 
 export type { Actor }
 
+export const MERCHANTS = [{ id: 1, name: '青柠数码' }, { id: 2, name: '山野户外' }]  // 与 seed 的商家一致
+
+const MERCHANT_KEY = 'smart-service.merchant'
+
+export function loadSelectedMerchant(): number | null {
+  const v = Number(localStorage.getItem(MERCHANT_KEY))
+  return MERCHANTS.some(m => m.id === v) ? v : null
+}
+
+export function saveSelectedMerchant(id: number): void {
+  localStorage.setItem(MERCHANT_KEY, String(id))
+}
+
 export const DEMO_ACTORS: Actor[] = [
   { id: 1, role: 'user', name: '演示用户', merchantId: null },
   { id: 2, role: 'merchant', name: '青柠数码', merchantId: 1 },

@@ -4,7 +4,7 @@ export function RolePickPage() {
   const pick = (a: Actor) => {
     saveActor(a)
     // 整页跳转：身份切换无需保留的状态，reload 保证路由守卫读到最新身份
-    window.location.assign(a.role === 'user' ? '/chat' : '/merchant')
+    window.location.assign(a.role === 'user' ? '/pick-merchant' : '/merchant')
   }
   return (
     <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center gap-3 p-6">

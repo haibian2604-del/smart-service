@@ -3,6 +3,7 @@ import type { Actor, Widget } from '../types'
 import { MessageList } from '../components/MessageList'
 import { useChatStream } from '../hooks/useChatStream'
 import { usePolling } from '../hooks/usePolling'
+import { loadSelectedMerchant, saveSelectedMerchant, MERCHANTS } from '../lib/actor'
 import { request } from '../lib/api'
 import { SwitchIdentityButton } from '../components/SwitchIdentityButton'
 import { ConfirmDialog } from '../components/ConfirmDialog'
@@ -10,7 +11,6 @@ import { Logo } from '../components/Logo'
 
 const QUICK_PROMPTS = ['你们有蓝牙耳机吗', '我的订单 #A1002 到哪了', '订单 #A1002 我要退款']
 
-const MERCHANTS = [{ id: 1, name: '青柠数码' }, { id: 2, name: '山野户外' }]  // 与 seed 的商家一致
 
 // 与后端 ensure_conversation 的 GREETING 保持一致（本地即时展示用，落库版在历史里）
 const GREETING = "您好，我是智能购物助手 🛍️\n\n可以帮您查询商品、订单物流，或办理退款。有什么可以帮您？"
@@ -19,7 +19,7 @@ export function ChatPage({ actor }: { actor: Actor }) {
   const [input, setInput] = useState('')
   const [convs, setConvs] = useState<{ id: number; title: string }[]>([])
   const [sidebarOpen, setSidebarOpen] = useState(true)
-  const [merchantId, setMerchantId] = useState(MERCHANTS[0].id)
+  const [merchantId, setMerchantId] = useState<number>(loadSelectedMerchant() ?? MERCHANTS[0].id)
   const [pendingDelete, setPendingDelete] = useState<number | null>(null)
   const { messages, send, streaming, streamingText, pendingTaskId, conversationId, appendMessage, loadConversation } = useChatStream(null)
 
@@ -57,7 +57,7 @@ export function ChatPage({ actor }: { actor: Actor }) {
           <div role="tablist" aria-label="选择商家" className="mx-3 mt-3 grid grid-cols-2 gap-1 rounded-xl bg-slate-100 p-1">
             {MERCHANTS.map(m => (
               <button key={m.id} role="tab" aria-selected={merchantId === m.id}
-                      onClick={() => setMerchantId(m.id)}
+                      onClick={() => { saveSelectedMerchant(m.id); setMerchantId(m.id) }}
                       className={`rounded-lg px-2 py-1.5 text-xs transition-colors duration-200 ${merchantId === m.id ? 'bg-white font-medium text-sky-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
                 {m.name}
               </button>

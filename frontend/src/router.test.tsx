@@ -12,10 +12,10 @@ describe('role guard', () => {
     expect(screen.getByText(/选择身份/)).toBeInTheDocument()
   })
 
-  it('blocks customer from merchant page', () => {
+  it('sends user without merchant selection to merchant picker', () => {
     saveActor({ id: 1, role: 'user', name: '演示用户', merchantId: null })
-    render(<MemoryRouter initialEntries={['/merchant']}><AppRoutes /></MemoryRouter>)
-    expect(screen.getByText(/无权访问/)).toBeInTheDocument()
+    render(<MemoryRouter initialEntries={['/chat']}><AppRoutes /></MemoryRouter>)
+    expect(screen.getByText(/选择要咨询的商家/)).toBeInTheDocument()
   })
 
   it('allows merchant into merchant page', () => {

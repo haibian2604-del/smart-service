@@ -1,13 +1,15 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { ChatPage } from './pages/ChatPage'
 import { MerchantPage } from './pages/MerchantPage'
+import { MerchantPickPage } from './pages/MerchantPickPage'
 import { RolePickPage } from './pages/RolePickPage'
-import { loadActor } from './lib/actor'
+import { loadActor, loadSelectedMerchant } from './lib/actor'
 import type { Actor } from './types'
 
 export function AppRoutes() {
   // 在 Router 内部读取：导航触发重渲染时自然拿到最新身份
   const actor: Actor | null = loadActor()
+  const merchantId = actor?.role === 'user' ? loadSelectedMerchant() : null
   if (actor === null) {
     return (
       <Routes>
@@ -15,9 +17,17 @@ export function AppRoutes() {
       </Routes>
     )
   }
+  if (actor.role === 'user' && merchantId === null) {
+    return (
+      <Routes>
+        <Route path="*" element={<MerchantPickPage />} />
+      </Routes>
+    )
+  }
   return (
     <Routes>
-      <Route path="/" element={<Navigate to={actor.role === 'user' ? '/chat' : '/merchant'} replace />} />
+      <Route path="/" element={<Navigate to={actor.role === 'user' ? '/pick-merchant' : '/merchant'} replace />} />
+      <Route path="/pick-merchant" element={actor.role === 'user' ? <MerchantPickPage /> : <Denied />} />
       <Route path="/chat" element={actor.role === 'user' ? <ChatPage actor={actor} /> : <Denied />} />
       <Route path="/merchant" element={actor.role === 'merchant' ? <MerchantPage actor={actor} /> : <Denied />} />
       <Route path="*" element={<Navigate to="/" replace />} />

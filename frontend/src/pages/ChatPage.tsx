@@ -10,6 +10,9 @@ import { Logo } from '../components/Logo'
 
 const QUICK_PROMPTS = ['你们有蓝牙耳机吗', '我的订单 #A1002 到哪了', '订单 #A1002 我要退款']
 
+// 与后端 ensure_conversation 的 GREETING 保持一致（本地即时展示用，落库版在历史里）
+const GREETING = "您好，我是智能购物助手 🛍️\n\n可以帮您查询商品、订单物流，或办理退款。有什么可以帮您？"
+
 export function ChatPage({ actor }: { actor: Actor }) {
   const [input, setInput] = useState('')
   const [convs, setConvs] = useState<{ id: number; title: string }[]>([])
@@ -96,7 +99,9 @@ export function ChatPage({ actor }: { actor: Actor }) {
                        onFinal={appendMessage} />
       )}
 
-      <MessageList messages={messages} streamingText={streamingText} />
+      <MessageList messages={messages.length === 0
+        ? [{ id: 'greeting', role: 'assistant' as const, content: GREETING, widgets: [], toolCalls: [] }]
+        : messages} streamingText={streamingText} />
 
       {/* 快捷演示 */}
       <div className="flex gap-2 px-4 pb-2">

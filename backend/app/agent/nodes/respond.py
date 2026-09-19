@@ -18,12 +18,17 @@ async def respond_node(state: AgentState, *, session: AsyncSession) -> dict:
     return updates
 
 
+GREETING = "您好，我是智能购物助手 🛍️\n\n可以帮您查询商品、订单物流，或办理退款。有什么可以帮您？"
+
+
 async def ensure_conversation(session: AsyncSession, *, user_id: int,
                               conversation_id: int | None) -> int:
-    """API 层用：无会话则建。"""
+    """API 层用：无会话则建，新会话由客服先打招呼（落库，历史可回看）。"""
     if conversation_id:
         return conversation_id
     conv = Conversation(user_id=user_id)
     session.add(conv)
+    await session.flush()
+    session.add(Message(conversation_id=conv.id, role="assistant", content=GREETING, widgets=[]))
     await session.flush()
     return conv.id

@@ -3,12 +3,13 @@ import re
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.agent.nodes.extract import extract_keyword
+from app.agent.prompts.persona import PERSONA
 from app.agent.scope import Scope
 from app.agent.state import AgentState
 from app.agent.tools.products import search_products
 
 
-_REPLY_PROMPT = """用户在询问是否有某类商品在售。请按以下结构用自然中文回复：
+_REPLY_PROMPT = PERSONA + """用户在询问是否有某类商品在售。请按以下结构用自然中文回复：
 1. 先直接回答有没有（例如「有的」/「暂时没有」）；
 2. 有几款就逐款简要介绍热门商品（名称 + 价格 + 一句卖点），不要大段罗列参数；
 3. 结尾邀请用户了解更多或直接下单。

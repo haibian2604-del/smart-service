@@ -6,6 +6,7 @@ from langgraph.graph.state import CompiledStateGraph
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.agent.nodes import chitchat, classify, human, order, product, refund, respond
+from app.agent.prompts.persona import PERSONA
 from app.agent.state import AgentState
 
 
@@ -60,5 +61,5 @@ async def _human_review(state: AgentState, config: RunnableConfig, *, session: A
 
 
 async def _unknown_node(state: AgentState, *, llm, emit=None) -> dict:
-    reply = await llm.stream("你是电商客服，简短回复。", "用户说了无法理解的话，请礼貌引导：\n" + state["text"], on_token=emit or (lambda t: None))
+    reply = await llm.stream(PERSONA + "用户说了无法理解的话，请礼貌引导。", "用户说：" + state["text"], on_token=emit or (lambda t: None))
     return {"reply": reply, "widgets": []}

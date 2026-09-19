@@ -1,6 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.agent.nodes.extract import order_no_in
+from app.agent.prompts.persona import PERSONA
 from app.agent.scope import Scope
 from app.agent.state import AgentState
 from app.agent.tools.orders import get_order_detail, list_my_orders
@@ -16,7 +17,7 @@ async def order_node(state: AgentState, *, session: AsyncSession, llm, emit=None
         if not orders:
             return {"reply": "您还没有任何订单，去商城逛逛吧！", "widgets": []}
         reply = await llm.stream(
-            "你是电商客服，用户在追问自己买过的订单/商品。"
+            PERSONA + "用户在追问自己买过的订单/商品。"
             "结合对话历史和订单列表（含商品明细）自然作答，只输出这段话本身。",
             str((state.get("history") or [])[-6:]) + "\n订单列表：" + str(orders),
             on_token=emit or (lambda t: None),
@@ -29,7 +30,7 @@ async def order_node(state: AgentState, *, session: AsyncSession, llm, emit=None
 
     widget = {"kind": "order", "data": detail}
     reply = await llm.stream(
-        "你是电商客服，把订单信息组织成一句简短自然的回复，只输出这句话本身。",
+        PERSONA + "把订单信息组织成一句简短自然的回复，只输出这句话本身。",
         str(detail),
         on_token=emit or (lambda t: None),
     )

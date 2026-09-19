@@ -21,7 +21,8 @@
 | 层 | 选型 |
 |---|---|
 | 后端 | FastAPI · uv · LangGraph · SQLAlchemy 2.x · Alembic |
-| 前端 | Vite · React · TypeScript · Tailwind CSS |
+| 前端 | Vite · React 19 · TypeScript · Tailwind CSS v4 · React Router |
+| 测试 | Vitest + React Testing Library（前端）· Pytest（后端） |
 | 数据库 | PostgreSQL 16（业务表与 LangGraph checkpoint 同库） |
 | LLM | 本地 oMLX `gemma-4-e2b-it-4bit`，OpenAI 兼容接口 |
 

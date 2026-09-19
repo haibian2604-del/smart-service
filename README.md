@@ -1,10 +1,19 @@
-# smart-service · 智能客服 Agent 系统（开发中）
+# smart-service · 智能客服 Agent 系统
 
 一个用于演示 **Agent 能力** 的智能客服系统：意图路由、工具调用、人工介入与中断恢复。
 
-> **当前状态：设计阶段。** 架构与实施计划已完成，代码尚未开始编写。
+> 状态：P0–P6 已全部完成，101 个测试通过，含五幕端到端演示。
 
----
+## 系统架构
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="doc/architecture-diagram.visual-check.1440x900.dark.png">
+  <img src="doc/architecture-diagram.visual-check.1440x900.light.png" alt="smart-service 系统架构图">
+</picture>
+
+> 交互版（引导视图 / 路径追踪 / 明暗主题 / 导出）：打开 [`doc/architecture-diagram.html`](doc/architecture-diagram.html)。
+
+主链路：**用户/商家 → React 前端 → FastAPI → LangGraph Agent → PostgreSQL**，旁路 oMLX 本地推理。租户过滤在 Agent 工具层的 where 条件内强制生效，而非先查询再校验。
 
 ## 核心能力
 
@@ -25,14 +34,6 @@
 | 测试 | Vitest + React Testing Library（前端）· Pytest（后端） |
 | 数据库 | PostgreSQL 16（业务表与 LangGraph checkpoint 同库） |
 | LLM | 本地 oMLX `gemma-4-e2b-it-4bit`，OpenAI 兼容接口 |
-
-## 架构
-
-```
-前端 (React) ──HTTP / SSE──▶ 后端 (FastAPI) ──▶ Agent 编排 (LangGraph) ──▶ PostgreSQL
-                                                      │
-                                                      └──▶ oMLX 本地推理
-```
 
 Agent 图：
 
@@ -67,8 +68,12 @@ START → classify ─┬─ product  ──────────────
 | `user` | `/chat` | 仅自己的订单与退款申请 | 咨询商品、查订单、申请退款 |
 | `merchant` | `/merchant` | 仅本店的商品、订单、退款工单 | 审批本店退款、查看本店订单 |
 
-租户过滤在 **Agent 工具层的 where 条件内**强制生效，而不是先查询再校验。
-若只在 API 层过滤，Agent 调用订单工具时仍可能读到其他商家的订单。
+隔离实现的三处硬约束：
+
+1. **依赖注入** `get_current_actor()` 解析出 `{role, actor_id, merchant_id}`（demo 级：请求头 `X-Actor-Id`，不做密码）。
+2. **查询层强制 scope**：`user` 角色 → `WHERE user_id = me`；`merchant` 角色 → `WHERE merchant_id = me`。
+3. **Agent 工具层接收 `scope` 参数**，where 条件由 scope 决定。
+   *不做这一步，Agent 会越权检索到别家订单。*
 
 ## 关键设计约束
 
@@ -87,31 +92,19 @@ START → classify ─┬─ product  ──────────────
 | 文件 | 内容 |
 |---|---|
 | [`doc/ARCHITECTURE.md`](doc/ARCHITECTURE.md) | 系统架构设计：分层、数据模型、Agent 图、API 契约 |
+| [`doc/architecture-diagram.html`](doc/architecture-diagram.html) | 交互式架构图（规范源：[`doc/architecture.smart-service.json`](doc/architecture.smart-service.json)） |
+| [`doc/RUNBOOK.md`](doc/RUNBOOK.md) | 启动手册：oMLX → 数据库 → 五幕演示 |
 | [`doc/plans/2026-09-17-smart-service-implementation.md`](doc/plans/2026-09-17-smart-service-implementation.md) | 32 任务实施计划，逐任务 TDD 步骤 |
 
-## 开发进度
-
-| 阶段 | 状态 |
-|---|---|
-| 架构设计 | 已完成 |
-| 实施计划 | 已完成 |
-| P0 脚手架 | ✅ 已完成 |
-| P1 数据层 | ✅ 已完成 |
-| P2 工具层 | ✅ 已完成 |
-| P3 Agent 图 | ✅ 已完成 |
-| P4 API 层 | ✅ 已完成 |
-| P5 前端 | ✅ 已完成 |
-| P6 端到端串通 | ✅ 已完成 |
-
 ## 快速开始
-
-见 [`doc/RUNBOOK.md`](doc/RUNBOOK.md)：oMLX 启动 → `make db-up migrate seed api web` → 五幕演示。
 
 ```bash
 make db-up && make migrate && make seed
 make api    # 注意与 oMLX 端口冲突，见 RUNBOOK
 make web
 ```
+
+完整步骤见 [`doc/RUNBOOK.md`](doc/RUNBOOK.md)：oMLX 启动 → `make db-up migrate seed api web` → 五幕演示。
 
 ## 目录结构
 
@@ -120,6 +113,8 @@ smart-service/
 ├── README.md
 ├── doc/
 │   ├── ARCHITECTURE.md
+│   ├── architecture-diagram.html      # 交互式架构图
+│   ├── architecture.smart-service.json  # 架构图规范源
 │   └── plans/
 ├── backend/          # FastAPI + LangGraph（101 tests green，含五幕端到端）
 │   ├── app/core/         # config / db / llm（oMLX 已连通）
@@ -129,5 +124,5 @@ smart-service/
 │   ├── alembic/          # 异步迁移
 │   ├── scripts/seed.py   # 幂等演示数据
 │   └── tests/            # 39 个测试（FakeLLM 策略，事务回滚隔离）
-└── frontend/         # Vite + React（待建）
+└── frontend/         # Vite + React 19 · /chat 对话工作台 · /merchant 商家工作台
 ```

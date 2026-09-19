@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "smart-service · 智能客服 Agent 系统",
+    "locale": "zh-CN",
+    "quality_profile": "showcase",
+    "output": "architecture-diagram.html",
+    "viewBox": [1240, 700],
+    "views": [
+      { "id": "main-path", "label": "主请求路径", "focus": ["users", "web", "api", "agent", "db"], "note": "从用户消息到 LangGraph 编排与落库的主链路。" },
+      { "id": "llm-boundary", "label": "LLM 边界", "focus": ["agent", "llm"], "note": "本地小模型只承担意图分类与自然语言生成。" },
+      { "id": "tenant-isolation", "label": "租户隔离", "focus": ["agent", "db", "api"], "note": "租户过滤在 Agent 工具层的 where 条件内强制生效。" }
+    ]
+  },
+  "components": [
+    { "id": "users", "type": "external", "label": "用户 / 商家", "sublabel": "浏览器", "pos": [40, 340], "size": [130, 64] },
+    { "id": "web", "type": "frontend", "label": "Web 前端", "sublabel": "Vite + React 19", "tag": "/chat · /merchant", "pos": [255, 340], "size": [140, 64] },
+    { "id": "api", "type": "backend", "label": "FastAPI 后端", "sublabel": "SSE 对话流 · REST · 审批 API", "pos": [480, 340], "size": [160, 64] },
+    { "id": "agent", "type": "backend", "label": "LangGraph Agent", "sublabel": "classify → 工具 → respond", "tag": "interrupt 挂起恢复", "pos": [720, 340], "size": [160, 72] },
+    { "id": "llm", "type": "external", "label": "oMLX 本地推理", "sublabel": "gemma-4-e2b-it-4bit", "tag": "OpenAI 兼容 /v1", "pos": [720, 130], "size": [160, 64] },
+    { "id": "db", "type": "database", "label": "PostgreSQL 16", "sublabel": "业务表 + checkpoint", "pos": [990, 340], "size": [160, 64] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "本地基础设施", "wraps": ["api", "agent", "llm", "db"] },
+    { "kind": "security-group", "label": "租户隔离 · 工具层 scope", "wraps": ["agent"] }
+  ],
+  "connections": [
+    { "id": "users-to-web", "from": "users", "to": "web", "label": "HTTP", "variant": "emphasis" },
+    { "id": "web-to-api", "from": "web", "to": "api", "label": "SSE 流式 · 轮询状态", "variant": "emphasis", "labelDy": 52 },
+    { "id": "api-to-agent", "from": "api", "to": "agent", "label": "编排调用" },
+    { "id": "agent-to-llm", "from": "agent", "to": "llm", "label": "意图分类 · 文案生成", "variant": "dashed", "labelDy": -14 },
+    { "id": "agent-to-db", "from": "agent", "to": "db", "label": "工具查询 · scope 过滤", "variant": "security" },
+    { "id": "api-to-db", "from": "api", "to": "db", "label": "业务 CRUD", "variant": "dashed", "fromSide": "bottom", "toSide": "bottom", "via": [[560, 520], [1070, 520]] }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "分层职责", "items": ["业务逻辑在 services/，Agent 只做编排与语言组织", "工具是纯 async 函数，可脱离 LLM 单独单测"] },
+    { "dot": "violet", "title": "人工介入闭环", "items": ["退款命中规则 → interrupt 挂起，落库 human_tasks", "商家工作台审批 → Command(resume) 恢复同一 thread_id"] },
+    { "dot": "rose", "title": "多租户隔离", "items": ["get_current_actor() 解析 {role, actor_id, merchant_id}", "租户过滤写在工具层 where 条件内，而非先查再校验"] }
+  ]
+}

@@ -9,6 +9,7 @@ class Conversation(PKMixin, TimestampMixin, Base):
     __tablename__ = "conversations"
 
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    merchant_id: Mapped[int | None] = mapped_column(ForeignKey("merchants.id"))
     title: Mapped[str | None] = mapped_column()
 
 

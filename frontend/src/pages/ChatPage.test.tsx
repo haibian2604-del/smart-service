@@ -10,6 +10,7 @@ vi.mock('../hooks/useChatStream', () => ({
     messages: [{ id: '1', role: 'user', content: '有耳机吗', widgets: [], toolCalls: [] }],
     send: vi.fn(), streaming: false, streamingText: '', pendingTaskId: null,
     conversationId: { current: null },
+    appendMessage: vi.fn(), loadConversation: vi.fn(),
   }),
 }))
 vi.mock('../hooks/usePolling', () => ({ usePolling: vi.fn() }))

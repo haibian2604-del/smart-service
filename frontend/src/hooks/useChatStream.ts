@@ -10,7 +10,7 @@ export function useChatStream(conversationId: number | null) {
   const [pendingTaskId, setPendingTaskId] = useState<number | null>(null)
   const convRef = useRef<number | null>(conversationId)
 
-  const send = useCallback(async (text: string) => {
+  const send = useCallback(async (text: string, merchantId?: number) => {
     const actor = JSON.parse(localStorage.getItem('smart-service.actor') ?? 'null')
     setMessages(m => [...m, { id: crypto.randomUUID(), role: 'user', content: text, widgets: [], toolCalls: [] }])
     setStreaming(true)
@@ -44,7 +44,7 @@ export function useChatStream(conversationId: number | null) {
         xhr.onprogress = () => { handle(xhr.responseText.slice(seen)); seen = xhr.responseText.length }
         xhr.onload = () => { handle(xhr.responseText.slice(seen)); if (xhr.status !== 200) reject(new Error(`HTTP ${xhr.status}`)); else resolve() }
         xhr.onerror = () => reject(new Error('网络错误'))
-        xhr.send(JSON.stringify({ conversation_id: convRef.current, message: text }))
+        xhr.send(JSON.stringify({ conversation_id: convRef.current, merchant_id: merchantId ?? undefined, message: text }))
       })
     } catch (err) {
       reply = `连接失败：${String(err)}`

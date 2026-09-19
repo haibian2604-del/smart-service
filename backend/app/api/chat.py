@@ -18,6 +18,7 @@ router = APIRouter()
 
 class ChatRequest(BaseModel):
     conversation_id: int | None = None
+    merchant_id: int | None = None
     message: str
 
 
@@ -42,7 +43,8 @@ async def chat_stream(body: ChatRequest, request: Request,
 
         try:
             conversation_id = await ensure_conversation(session, user_id=actor.id,
-                                                        conversation_id=body.conversation_id)
+                                                        conversation_id=body.conversation_id,
+                                                        merchant_id=body.merchant_id)
             session.add(Message(conversation_id=conversation_id, role="user", content=body.message))
             await session.flush()
 
@@ -63,7 +65,8 @@ async def chat_stream(body: ChatRequest, request: Request,
                     final = await graph.ainvoke({
                         "text": body.message,
                         "actor_role": scope.role, "actor_id": scope.user_id,
-                        "merchant_id": scope.merchant_id, "conversation_id": conversation_id,
+                        "merchant_id": body.merchant_id if body.merchant_id is not None else scope.merchant_id,
+                        "conversation_id": conversation_id,
                         "history": [{"role": "user", "content": body.message}],
                     }, config=config)
                 except GraphInterrupt:
@@ -104,15 +107,18 @@ async def chat_stream(body: ChatRequest, request: Request,
 
 
 @router.get("/api/conversations")
-async def list_conversations(actor: Actor = Depends(get_current_actor),
+async def list_conversations(request: Request,
+                             actor: Actor = Depends(get_current_actor),
                              session: AsyncSession = Depends(get_session)):
     """当前用户的历史会话列表，标题取首条用户消息。"""
     from sqlalchemy import select
     from app.models import Conversation, Message
 
+    stmt = select(Conversation).where(Conversation.user_id == actor.id)
+    if actor_merchant_id := request.query_params.get("merchant_id"):
+        stmt = stmt.where(Conversation.merchant_id == int(actor_merchant_id))
     convs = (await session.execute(
-        select(Conversation).where(Conversation.user_id == actor.id)
-        .order_by(Conversation.id.desc()).limit(20))).scalars().all()
+        stmt.order_by(Conversation.id.desc()).limit(20))).scalars().all()
     items = []
     for c in convs:
         first = (await session.execute(

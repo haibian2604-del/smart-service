@@ -22,11 +22,12 @@ GREETING = "您好，我是智能购物助手 🛍️\n\n可以帮您查询商�
 
 
 async def ensure_conversation(session: AsyncSession, *, user_id: int,
-                              conversation_id: int | None) -> int:
+                              conversation_id: int | None,
+                              merchant_id: int | None = None) -> int:
     """API 层用：无会话则建，新会话由客服先打招呼（落库，历史可回看）。"""
     if conversation_id:
         return conversation_id
-    conv = Conversation(user_id=user_id)
+    conv = Conversation(user_id=user_id, merchant_id=merchant_id)
     session.add(conv)
     await session.flush()
     session.add(Message(conversation_id=conv.id, role="assistant", content=GREETING, widgets=[]))

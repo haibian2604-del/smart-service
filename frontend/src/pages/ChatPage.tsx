@@ -3,7 +3,7 @@ import type { Actor, Widget } from '../types'
 import { MessageList } from '../components/MessageList'
 import { useChatStream } from '../hooks/useChatStream'
 import { usePolling } from '../hooks/usePolling'
-import { loadSelectedMerchant, saveSelectedMerchant, MERCHANTS } from '../lib/actor'
+import { loadSelectedMerchant, MERCHANTS } from '../lib/actor'
 import { request } from '../lib/api'
 import { SwitchIdentityButton } from '../components/SwitchIdentityButton'
 import { ConfirmDialog } from '../components/ConfirmDialog'
@@ -19,7 +19,7 @@ export function ChatPage({ actor }: { actor: Actor }) {
   const [input, setInput] = useState('')
   const [convs, setConvs] = useState<{ id: number; title: string }[]>([])
   const [sidebarOpen, setSidebarOpen] = useState(true)
-  const [merchantId, setMerchantId] = useState<number>(loadSelectedMerchant() ?? MERCHANTS[0].id)
+  const [merchantId] = useState<number>(loadSelectedMerchant() ?? MERCHANTS[0].id)
   const [pendingDelete, setPendingDelete] = useState<number | null>(null)
   const { messages, send, streaming, streamingText, pendingTaskId, conversationId, appendMessage, loadConversation } = useChatStream(null)
 
@@ -53,15 +53,6 @@ export function ChatPage({ actor }: { actor: Actor }) {
             <button aria-label="收起历史会话" title="收起"
                     onClick={() => setSidebarOpen(false)}
                     className="rounded-lg px-2 py-1 text-xs text-slate-500 hover:bg-slate-100">« 收起</button>
-          </div>
-          <div role="tablist" aria-label="选择商家" className="mx-3 mt-3 grid grid-cols-2 gap-1 rounded-xl bg-slate-100 p-1">
-            {MERCHANTS.map(m => (
-              <button key={m.id} role="tab" aria-selected={merchantId === m.id}
-                      onClick={() => { saveSelectedMerchant(m.id); setMerchantId(m.id) }}
-                      className={`rounded-lg px-2 py-1.5 text-xs transition-colors duration-200 ${merchantId === m.id ? 'bg-white font-medium text-sky-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
-                {m.name}
-              </button>
-            ))}
           </div>
           <button onClick={() => loadConversation(0, [])}
                   className="mx-3 mt-3 rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-700 hover:border-sky-400 hover:text-sky-700">
